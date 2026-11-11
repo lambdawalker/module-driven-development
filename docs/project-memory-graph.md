@@ -1,144 +1,129 @@
 # Project Memory Graph
 
-**Working name. Status: proposed companion system / concept draft, 2026-11-11.** This document captures an idea for later design and experimentation. No implementation, storage technology, or hosting model has been selected.
+**Working name. Status: proposed companion system / concept draft, 2026-11-11.** This document captures an architecture concept for staged experimentation. No custom database or hosted service has been deployed.
 
 ## Purpose
 
-Provide durable shared memory of a project's structure, decisions, obligations, versions, and overall progress across interconnected repositories.
+Provide durable shared memory of a project's structure, specifications, change agreements, obligations, versions, and overall progress across interconnected repositories.
 
-A project is larger than a single repository. Its modules evolve independently, publish different versions, and depend on one another. Project Memory Graph would help humans and AI understand that whole without relying exclusively on conversation context or scattered pull request notes. It directly addresses the coordination and version-tracking costs of multiple repositories.
+A project is larger than a single repository. Its modules evolve independently, publish candidate and release artifacts, and depend on one another. Project Memory Graph helps humans and AI understand the assembled system without relying on ephemeral chat history or scattered pull request comments, directly addressing the coordination cost of multi-repository development.
 
-The methodology remains usable without this software. The system may support other development approaches as well.
+The methodology remains usable without a dedicated graph service—starting from declarative files in Git—and the graph model can support other development workflows as well.
 
 ## Capabilities requested in discussion
 
-- Track module dependencies as a graph.
-- Draft and display interactions between modules in diagrams.
-- Show the humans and agents responsible for obligations and their status.
-- Expose an API and MCP interface for agents and tooling.
-- Provide a development dashboard and reports for humans.
-- Let AI record project information and retrieve it in later sessions.
-- Track overall progress and the versions used across interconnected repositories.
-- Support planning-time impact analysis and participation from affected teams, including teams sharing one repository.
+- Track module dependencies and exported contracts as a graph.
+- Draft and display architectural and interaction diagrams across modules.
+- Show the humans and agents responsible for obligations and their current status.
+- Expose a schema-validated API and MCP interface for agents and tooling.
+- Provide a development dashboard and progress reports for humans.
+- Let AI record structured project updates and retrieve verified state in later sessions.
+- Track overall progress, staging candidates, and exact versions integrated across repositories.
+- Support planning-time impact analysis and participation from affected teams, including multi-team composition hosts.
 
 ## Proposed records
 
-These are initial modeling suggestions, not a finalized schema.
+Aligned with the three-artifact governance model in [Specifications and approvals](specifications-and-approvals.md), initial modeling separates durable module identity from task agreements and immutable release proofs:
 
 | Record | Purpose |
 | --- | --- |
-| Project | Connect repositories and modules to their shared goals |
-| Module | Identify responsibility, repository, contract, and maintainers |
-| Version or artifact | Identify source revision, published artifact or deployment, and verification evidence |
-| Dependency | Record that one module consumes another, including required and actually integrated versions |
-| Obligation | Record what one module must deliver for another, why, acceptance criteria, and blockers |
-| Assignment | Identify the responsible human or agent and the scope of their responsibility |
-| Module agreement | Link to approved scope, constraints, verification cases, and approval record |
-| Evidence and decision | Link results and acceptance decisions to the exact versions and obligations they support |
-| Progress event | Preserve changes in state and their basis over time |
+| Project | Connect leaf module repositories and application composition hosts to shared goals |
+| Module | Identify repository (or sub-repository path in a host), role (leaf module vs. composition host), owners, and risk tier |
+| Module specification | Link to the versioned durable specification (`MODULE.md`), public contracts, capability ceiling, and resource budgets |
+| Version or artifact | Identify source SHA, staging candidate or public artifact digest, and N-back compatibility metadata |
+| Dependency | Record that consumer A uses provider B, distinguishing declared range, staging candidate, and integrated release version |
+| Obligation | Record what B must deliver for A, motivating need, consumer acceptance checks, and active blockers |
+| Change agreement | Link a task/PR scope delta, impact assessment, recovery plan, required reviewers, and approval status |
+| Assignment | Identify the responsible human or agent and the bounded scope of their authorization |
+| Release attestation | Link immutable verification results, audit records, and Human QA sign-offs to exact artifact digests |
+| Progress or signal event | Preserve timestamped state transitions, external monitor alerts, and their provenance |
 
-A dependency is a structural relationship: **A consumes B**. An obligation is a commitment: **B must supply a capability that fulfills A's need**. A dependency can have multiple obligations, and completing one does not complete all work between the modules.
+A dependency is a structural relationship (**A consumes B**). An obligation is a commitment (**B must supply a capability that fulfills A's need**). Completing one obligation does not imply all integration work is complete.
 
 ## Example: consumer-led integration
 
-The discussion established two checks: the changed library B verifies its own obligations, and consumer A independently verifies that integrating B fulfills A's motivating need.
+Two independent checks govern cross-module work: provider library B verifies its own contract and invariants, and consumer A independently verifies that integrating B satisfies A's motivating need.
 
-A may have an integration branch with tests that intentionally fail while waiting for B's deliverable. That is a legitimate pending state, rather than evidence that those tests should be removed or weakened.
+A may maintain an integration branch with tests that intentionally fail while waiting for B's deliverable—or point temporarily at a commit-SHA staging build from B's CI inner loop. That pending state is normal work in progress, never a reason to delete or weaken A's tests.
 
-The graph could record:
+The graph records:
 
-1. A's motivating requirement, branch, and expected failing checks.
-2. The linked obligation assigned to B, its agreed checks, and responsible human or agent.
-3. B's resulting revision or artifact and its verification results.
-4. A's integration of that exact B version and its separate consumer results.
-5. The final acceptance outcome and any remaining blockers.
+1. A's motivating requirement, integration branch, and expected failing consumer checks.
+2. The linked obligation assigned to B, agreed Change Agreement checks, and responsible owner.
+3. B's candidate staging artifact (for inner-loop verification) followed by B's confirmed public release version and Release Attestation.
+4. A's integration of that exact public B version and A's independent consumer test results.
+5. Final acceptance outcome and any remaining production QA gates.
 
-B can finish its own deliverable while A's integration is pending. B's reported completion must not automatically satisfy A's acceptance criteria. Expected failures explain work in progress; they do not constitute acceptance or authorize merging.
+B's completion claim never auto-satisfies A's consumer acceptance criteria.
 
 ## Impact analysis during module planning
 
-The graph should inform the planning conversation before implementation and publication. It should identify direct and indirect consumers, the versions they use, and the application compositions in which those consumers meet.
+The graph informs planning before implementation or publication, surfacing direct and transitive consumers, currently pinned versions, N-back client skew constraints, and the application compositions where modules meet.
 
-Ownership must be representable below the repository level: two teams may own different components in the same repository and rarely communicate because they work in different locations or time zones. Repository membership alone is not sufficient to identify affected stakeholders.
+### Reconciling repository independence with multi-team ownership
+
+As defined in [Principles](principles.md#distinguish-leaf-modules-from-composition-hosts), **leaf and feature module repositories** maintain single-team ownership over one cohesive responsibility. However, **application composition hosts** (such as `go.attestra.aws` or unified mobile shell apps) and legacy repositories undergoing gradual extraction often bring together components owned by different teams across locations or time zones.
+
+Ownership in the graph must therefore support optional **sub-repository path/component granularity** (mirroring `CODEOWNERS` or subproject boundaries) inside composition hosts and transitional repos, rather than assuming repository-level membership alone identifies every stakeholder.
 
 ### Example: shared dependency, two teams
 
-Team A requests a change to a shared library. Team B owns another component that consumes that library. Both components are integrated into one application, and a planned dependency upgrade may affect both.
+Team A requests a change to a shared library. Team B owns another component (either in its own repository or inside a shared application composition host) that consumes that library, and a planned application release integrates both.
 
 During module planning, AI should:
 
-1. Find both consumer relationships, their owners, current versions, and the planned application version.
-2. Explain what may be affected, the assumptions involved, and the evidence supporting the impact assessment.
-3. Identify Team B as a participant to invite into the planning conversation, including through asynchronous contributions.
-4. Incorporate each affected team's requirements and consumer checks into the draft agreement or linked agreements.
-5. Record the required reviewers and which decision each review authorizes.
+1. Query both consumer relationships, their component owners, pinned versions, and target application composition.
+2. Explain potential contract, binary, wire-skew, or resource-budget impacts and supporting evidence.
+3. Identify Team B for asynchronous participation in the Change Agreement review via an authorized notification channel.
+4. Incorporate both teams' consumer checks into the Change Agreement or linked obligations.
+5. Record explicit team-representative review requirements before breaking or cross-cutting changes publish or integrate.
 
-Publishing a new library version and upgrading a consuming application are distinct events. Publication does not automatically mean every consumer adopts the version. Analyze both the release and the actual integration or dependency-resolution change.
+Publishing a new library version and upgrading a consuming application remain distinct events; both must be analyzed.
 
 ### Reviews reflect affected ownership
 
-One human approver remains the baseline for a solo developer or a change covered by that policy. For a change affecting two teams, the project can require two human reviews: one representative of the requesting team and one representative of the other affected team.
-
-This is contextual review coverage, not a universal requirement for two reviewers on every change. Record which teams must be represented and the scope of their approvals, rather than counting any two approvals as sufficient.
-
-Planning approval covers the agreed requirements. Publication or integration review covers the resulting evidence and candidate version, according to the project's policy. If both team reviews are required for publication, publication must wait for both; missing responses are not approval.
-
-The graph should expose pending contributions, required reviews, decisions, tested consumer combinations, and unresolved objections. It identifies who needs to participate; actual invitations and notifications require an authorized delivery mechanism.
+One human approver remains the baseline for a solo developer or single-owner leaf module. When impact analysis shows two teams' components are affected, policy can require one authorized reviewer per affected team—matching actual ownership rather than counting arbitrary approvals. Missing responses are never treated as consent.
 
 ### Incomplete knowledge is visible
 
-Report the provenance and freshness of consumer and ownership information. Missing or stale relationships mean impact analysis is incomplete, not that no other team is affected. The agreement should make those gaps visible and record how the project decides to resolve them before proceeding.
+Records must carry provenance and freshness timestamps. Stale or unindexed consumer relationships mean impact analysis has explicit blind spots—not that zero teams are affected—and those gaps must be surfaced in the Change Agreement.
 
 ## Version tracking and overall progress
 
-The system should distinguish a requested version, an available candidate, an actually integrated version, and a combination verified together. Availability alone does not establish compatibility.
+Progress views must distinguish: `agreement approved`, `implementation complete`, `staging candidate verified`, `public artifact released`, `consumer integrated`, and `production QA signed off`, rather than collapsing multi-repo readiness into a single "done" percentage.
 
-For a project, it could report the module versions in use, pending upgrades, obligations blocked on unpublished artifacts, and verified integration combinations. Progress should distinguish implementation complete, artifact available, consumer integration pending, and accepted outcome rather than collapsing them into one “done” label.
+## Trust, governance, and prompt-injection defenses
 
-Exact state names, compatibility representation, and progress calculations remain open. A percentage of closed tasks alone would not establish project readiness.
+Because AI agents read Project Memory Graph records via MCP during planning and implementation, the graph is a high-value target for **indirect prompt injection** and state poisoning:
 
-## Shared memory and interfaces
+- **Treat free-text fields as untrusted data:** issue summaries, external user reports, commit notes, and free-form descriptions retrieved via MCP must be delineated as untrusted data and never interpreted as system instructions or authorization overrides.
+- **Use strict typed schemas for control state:** status transitions, approval flags, risk tiers, artifact digests, and reviewer identities must use schema-validated enums, cryptographic hashes, and authenticated principal IDs rather than free-text prose.
+- **Scope write permissions per repository and role:** an agent working on Module B may post candidate build links for Module B, but cannot mark Consumer A's obligation as accepted or clear a human-review requirement.
+- **Single source of authority:** Git repositories and enforced CI/review records remain authoritative for code, specifications, and approvals; the graph indexes and links to those immutable URLs/SHAs rather than creating a competing approval ledger.
 
-The dashboard, diagrams, reports, API, and MCP should expose consistent views of the same underlying records.
+## Phased bootstrap and operational monitoring boundary
 
-An AI could retrieve the relevant modules, current agreements, outstanding obligations, owners, expected failures, versions, and evidence when resuming work. Records should retain links to their sources so the agent can inspect the original agreement, pull request, commit, artifact, or result.
+### Phase 1: Git-native declarative manifests (recommended solo/small-team start)
 
-GitHub can continue to hold code and reviews while this system connects their meaning across repositories. Which records are authoritative in the graph versus external systems remains a design question; the system should not create competing untraceable versions of the same decision.
+Avoid operating a separate database and stateful web service before repository count demands it:
 
-Useful queries include:
+1. Each repository checks in a small, schema-validated manifest (for example, `MODULE.yaml` or frontmatter in `MODULE.md`) declaring module ID, role (leaf vs. host), owner, risk tier, exported contracts, and consumed module coordinates.
+2. A lightweight CI job or local CLI aggregates manifests and GitHub PR/release metadata across repositories into a deterministic JSON graph artifact exposed via a local MCP server and static HTML/Markdown summary.
+3. Git remains the sole source of truth, eliminating split-brain reconciliation and concurrent database write races.
 
-- What is blocking A, who owns the obligation, and what evidence will unblock it?
-- Which B version is A actually using, and which combination was verified?
-- What has changed since this agent last worked on the project?
-- Which failures are expected while a dependency is pending?
-- What needs human approval, and what can proceed within existing authorization?
-- Which consumers may be affected by this proposed change?
+### Phase 2: Dedicated coordination service
 
-## Trust and governance proposals
+Introduce persistent storage, live webhook ingestion, cross-repo obligation queues, and interactive dashboards only when multi-team concurrency or cross-repo query volume outgrows static CI aggregation.
 
-- Distinguish proposed relationships from confirmed relationships, and reported completion from verified acceptance.
-- Preserve provenance, revision identity, authorship, timestamps, and history for meaningful updates.
-- Make stale or conflicting information visible; missing data must not silently appear as verified progress.
-- Scope read and write access to each human's or agent's responsibilities.
-- Treat retrieved records as project data, not as authority to override approval requirements.
-- Link acceptance to its evidence and approved policy or human decision.
-- Do not let an agent's completion claim substitute for independent consumer verification.
+### Operational monitoring boundary
 
-## Suggested initial scope
-
-Start with modules, dependencies, obligations, human and agent assignments, versions, status history, and evidence links, exposed through a small API/MCP surface and human-readable dashboard or reports.
-
-This is a suggested starting scope rather than an approved implementation plan. Scheduling, notification delivery, automated code execution, and full release orchestration can be evaluated separately.
+Project Memory Graph is an architectural and coordination memory system, **not** a primary runtime monitoring engine. Periodic operational checks (such as verifying S3 bucket public-access blocks, database health, or error-rate spikes) belong in dedicated infrastructure and cloud tools (AWS Config, CloudWatch, Prometheus). Those external monitors should emit structured drift or alert events *into* the graph so the graph can map affected modules, consuming teams, and responsible recovery owners.
 
 ## Open design questions
 
-- What is the smallest useful deployment for a solo developer and for a team?
-- Which system owns each record, and how are GitHub and other sources reconciled?
-- How do agents update records safely when working concurrently?
-- How are stale records detected and corrections recorded?
-- How are versions, artifacts, deployments, and tested combinations identified?
-- How are graph views kept understandable as projects grow?
-- What information may be stored, and which permissions protect it?
-- How will a trial establish that this memory improves continuity and reduces coordination errors?
+- Exact YAML/JSON schema for Phase 1 in-repo manifests and obligation links.
+- Reconciliation rules if Phase 2 introduces mutable operational annotations alongside Git-owned specifications.
+- Diagram generation rules that stay readable as module count grows.
+- Trial metrics proving reduced cross-repo coordination errors compared to plain repository docs.
 
-Related methodology discussion: [Specifications and approvals](specifications-and-approvals.md).
+Related methodology discussion: [Specifications and approvals](specifications-and-approvals.md) and [Principles](principles.md).

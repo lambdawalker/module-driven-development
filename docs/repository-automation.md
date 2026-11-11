@@ -4,7 +4,7 @@
 
 Independent repositories need shared automation for recurring setup and consistent delivery. The Android standard is being implemented through [gradle.android-repo-setup](https://github.com/lambdawalker/gradle.android-repo-setup); adoption is in progress.
 
-A shared tool is itself a module with a version, consumers, maintenance responsibilities, and audit scope.
+A shared tool is itself a `Tier 1` critical-trust module with a version, consumers, maintenance responsibilities, and full security audit scope.
 
 ## Observed Android implementation
 
@@ -44,22 +44,42 @@ Feature modules supply declarations, contracts, runtime artifacts, and infrastru
 
 The deployment tooling can export public Android configuration for the Android build. This connects backend outputs to the consuming client without placing deployment credentials in that configuration.
 
-A published Android library and a deployed backend are different deliverables. Both need traceable versions and verification, but they use different tools and have different evidence requirements.
+A published Android library and a deployed backend are different deliverables. Both need traceable versions and verification, but they use different tools and have different release gates (library verification gates versus deployable Human QA sign-off).
+
+## Pre-release inner loop across repositories
+
+When a change spans multiple repositories (for example, `Coordinates` → `Card Detector` → `Auth`), cutting permanent public release tags just to test whether a downstream consumer branch compiles and passes obligation checks creates version spam and broken intermediate releases. Shared tooling should support a three-stage progression:
+
+1. **Local composite inner loop:** developers and local agents use build-system composition (such as Gradle `includeBuild`, Go `go.work` workspaces, or local build-scoped Maven repositories) to iterate across adjacent modules without mutating committed release coordinates.
+2. **CI cross-repo staging loop:** pull requests or integration branches publish immutable, commit-SHA-versioned candidate artifacts (for example, `0.3.0-sha.<commit>`) to an internal or ephemeral staging registry. Waiting consumer integration branches resolve that exact candidate digest to verify consumer obligations before any public version is reserved.
+3. **Public release promotion guard:** merging to `main` and cutting a public release strictly rejects local path overrides, `SNAPSHOT` coordinates, or ephemeral staging dependencies—requiring confirmed public dependency versions and immutable hashes.
+
+## Dependency and transitive version governance
+
+Independent module release cycles quickly trigger diamond-dependency conflicts if transitive boundaries are leaky (as seen when `Auth` manually unpacked model assets from an AAR to dodge an older transitive core library):
+
+- **Internalize dependencies by default:** library modules must declare dependencies as `implementation` (or private internal imports) unless a dependency's types intentionally form part of the module's public contract (`api`).
+- **Separate data/ML assets from runtime code:** package ML weights, schemas, and static calibration assets as code-free asset bundles or raw artifacts with versioned metadata manifests rather than embedding them inside AARs/JARs coupled to older runtime classes.
+- **Align shared foundations via BOMs and ABI checks:** maintain an ecosystem Bill of Materials (or shared version platform) for cross-cutting runtime libraries, and enforce automated binary compatibility checks (such as Kotlin `binary-compatibility-validator` and wire-schema linters) in CI on every pull request.
+
+## Credential isolation and repository protection
+
+Because shared automation provisions signing keys, GitHub environments, and local encrypted setup files, strict privilege separation between AI agents and release infrastructure is mandatory:
+
+- **Zero agent access to signing and production secrets:** AI coding, planning, and verification agents must never have filesystem read access, environment variable injection, or decryption passphrases for APK keystores, Maven GPG keys, `.project/setup` encrypted secrets, or cloud deployment credentials.
+- **Isolated release execution:** artifact signing, public publication, and infrastructure deployment run exclusively inside protected CI environments (using hardware-backed keys or short-lived OIDC tokens) or human-invoked release enclaves after required approvals and status checks pass.
+- **Enforced repository rulesets:** shared setup tooling should configure and drift-check branch protection on `main` and release tags—blocking direct pushes, requiring deterministic CI gates, dismissing stale reviews on new commits, pinning shared tooling by immutable commit SHA (or verified signed tag), and preventing bot identities from bypassing review rules.
 
 ## Proposed methodology rules
 
-The following are proposals for extending the observed approach into a general standard.
-
-1. Maintain shared setup and delivery behavior in versioned tooling instead of independently reproducing it in each repository.
-2. Keep repository-specific identity, artifact type, commands, and verification expectations in reviewable configuration.
-3. Check generated files for drift and review changes when upgrading tooling.
-4. Verify the artifact a consumer will receive, including its dependencies and public API, as well as the module source.
-5. Record source, configuration, tooling versions, destination, and outcome for each release or deployment.
-6. Keep publication and deployment explicit operations with recoverable state.
-7. Validate consuming integrations when changing a module, tooling, or environment configuration.
-8. Audit shared automation with the same attention as product modules: it can hold credentials, execute code, publish artifacts, and affect many consumers.
-
-Required configuration fields, supported artifact profiles, release gates, and deployment evidence formats remain open.
+1. Maintain shared setup and delivery behavior in versioned, `Tier 1`-audited tooling instead of reproducing scripts per repository.
+2. Keep repository-specific identity, artifact profile (AAR, Kotlin/JVM JAR, code-free model bundle, Go module), resource budgets, and verification commands in reviewable configuration.
+3. Check generated workflows and branch-protection rulesets for drift, and require human workstation review when upgrading shared tooling pins.
+4. Provide local composite-build hooks and commit-SHA staging feeds so multi-repo changes are verified end-to-end before reserving public versions.
+5. Enforce `implementation`-by-default dependency scoping, automated ABI/wire compatibility checks, and ecosystem BOM alignment.
+6. Isolate all signing keys, encrypted setup passphrases, and deployment credentials strictly outside AI agent sandboxes.
+7. Emit an immutable **Release Attestation** recording source SHA, artifact digest, resolved lockfiles, tooling version, and verification/QA proofs for every release or deployment.
+8. Keep publication and deployment explicit, idempotent operations with preserved state for recovery.
 
 ## Source references
 
@@ -72,5 +92,5 @@ Inspected on 2026-11-11. Links identify the studied revisions.
 - [Demo Common configuration](https://github.com/lambdawalker/android.apexfission.demo-common/blob/bbca41928efdb7ad7cbe71a53d2ec75095a2d047/.project/setup/config.yaml) and [plugin application](https://github.com/lambdawalker/android.apexfission.demo-common/blob/bbca41928efdb7ad7cbe71a53d2ec75095a2d047/demo-common/build.gradle.kts).
 - [Permissions configuration](https://github.com/lambdawalker/android.apexfission.permissions/blob/366c04f5c28cb2268316c347005c729464e4a514/.project/setup/config.yaml) and [plugin application](https://github.com/lambdawalker/android.apexfission.permissions/blob/366c04f5c28cb2268316c347005c729464e4a514/permission/build.gradle.kts).
 - [Auth publication configuration](https://github.com/lambdawalker/android.apexfission.auth/blob/6a360ca493f77a93ffe529496ef93622e38c02d8/auth/build.gradle.kts).
-- [Coordinates artifact type and build](https://github.com/lambdawalker/android.apexfission.math.coordinates/blob/3f7e0c26734ebe4ed8f5516e0f5644ec5df03740/README.md).
+- [Coordinates artifact type and build](https://github.com/lambdawalker/android.apexfission.math.coordinates/blob/3f7e0c26734ebe4ed8f5644ec5df03740/README.md).
 - [Application Pulumi composition](https://github.com/lambdawalker/go.attestra.aws/blob/fb63b7829308725d8c6ece6de6511efa9838e534/infra/main.go) and [Android configuration export](https://github.com/lambdawalker/go.attestra.aws/blob/fb63b7829308725d8c6ece6de6511efa9838e534/tools/deploy/internal/android/export.go).

@@ -24,6 +24,13 @@ The artifact chain is visible from Coordinates through Card Detector to Auth. Ea
 
 These statements describe declarations inspected in current source. Auth pins older dependency releases; the current Card Detector main branch and the detector artifact pinned by Auth are not assumed to be identical. No resolved dependency graph or compatibility test was run for this study.
 
+### Transitive governance lessons illustrated here
+
+Two observations in the Android chain directly motivate the transitive dependency rules in [Repository automation](../repository-automation.md#dependency-and-transitive-version-governance):
+
+- **Manual AAR asset extraction as a boundary smell:** Auth's build logic unpacks model files from the Card model release artifact to avoid pulling in the model AAR's classes and older transitive core dependency. Packaging ML weights and metadata manifests as code-free asset artifacts eliminates the need for consumers to strip classes manually.
+- **Explicit `api` versus `implementation` scoping:** Card Detector exports `Coordinates` and `YOLO` via Gradle `api`. Under the methodology's transitive governance rules, `api` exposure should be reserved strictly for types intentionally surfaced in Card Detector's public contract, internalizing underlying inference details behind `implementation` and guarding public signatures with automated ABI checks.
+
 ## Backend composition
 
 The application repository `go.attestra.aws` registers authentication, email verification, card capture, and an application-owned runtime binding.
@@ -33,14 +40,14 @@ Its `composition.go` explicitly injects contracts between those features. Its Pu
 | Owner | Observed responsibility |
 | --- | --- |
 | Feature repositories | Declare capabilities and requirements and provide runtime code, artifacts, and native infrastructure entry points. |
-| Application repository | Selects features, binds shared resources, supplies configuration, and coordinates deployment. |
+| Application repository (`go.attestra.aws`) | Acts as an **Application Composition Host** (see [Principles](../principles.md#distinguish-leaf-modules-from-composition-hosts)): selects features, binds shared resources, enforces system configuration, and coordinates deployment. |
 | Composer | Resolves declared contracts and prerequisites into a validated plan. |
 | Pulumi adapter and factories | Register infrastructure using the application-provided factory registry and typed outputs. |
 | Deployment tooling | Handles operator workflows and exports public settings consumed by Android. |
 
 Composer's core is separate from its optional Pulumi adapter. Its documented matching checks include contract identity, major version, fields, sensitivity, and labels; full minor/patch range solving is not implemented.
 
-The Android client consumes the backend through HTTP and configuration. It does not import Pulumi or backend runtime code. Backend composition and Android artifact composition are related parts of the system, with distinct integration mechanisms.
+The Android client consumes the backend through HTTP and exported configuration. It does not import Pulumi or backend runtime code. Because shipped Android APKs cannot be reverted once installed on user devices, this HTTP/configuration boundary requires explicit N-back wire compatibility and server-side kill switches during rollout.
 
 ## Why the coordinates repository is justified
 
@@ -50,10 +57,10 @@ The current repository contains explicit image-space models and tests for transf
 
 This illustrates two complementary verification scopes:
 
-- The extracted library checks the coordinate operations and their contracts.
-- The consumer checks how those operations are applied to camera preview and overlay behavior.
+- The extracted library (`Tier 3` pure-compute leaf profile) checks coordinate invariants and mathematical contracts without camera or UI noise.
+- The consumer (`Tier 2` feature integration profile) checks how those operations apply to camera preview spaces and overlay rendering.
 
-The presence of tests is evidence of intended coverage, not a claim that tests were run or that extraction established complete correctness.
+The presence of tests is evidence of intended coverage, not a claim that tests were run or that extraction established complete correctness. Pairing `Coordinates` with context-isolated invariant testing further protects against correlated AI assumptions.
 
 ### Principle established by this example
 
@@ -67,21 +74,19 @@ Feature and platform boundaries are starting points. Difficult algorithms, share
 
 Demo Common and Permissions already apply the shared setup plugin. Auth's inspected source still uses its earlier publishing setup.
 
-The intended model is independently owned modules supported by common, versioned setup and delivery machinery. The common standard reduces repeated maintenance while module configuration preserves specific artifact and verification requirements.
-
-See [repository automation and delivery](../repository-automation.md) for the observed responsibilities, adoption state, and proposed general rules.
+The intended model is independently owned modules supported by common, versioned setup and delivery machinery. Extending that machinery with local composite builds and commit-SHA CI staging feeds allows coordinated updates across `Coordinates` → `Card Detector` → `Auth` to be verified before cutting public releases; see [Repository automation and delivery](../repository-automation.md).
 
 ## Implications and remaining questions
 
-The example supports module boundaries based on cohesive responsibility and verification needs. It also shows that one repository can legitimately include a library plus its demo, tests, documentation, and delivery configuration.
+The example supports module boundaries based on cohesive responsibility and verification needs, clarifies the distinction between **leaf module repositories** and **application composition hosts**, and shows that one leaf repository can legitimately include a library plus its demo host, tests, documentation, and delivery configuration.
 
-The methodology still needs to specify:
+Remaining ecosystem-level engineering tasks include:
 
-- A module's required contract and evidence package.
-- How consumer compatibility is checked against released artifacts.
-- How backend outputs and client configuration versions are tracked together.
-- How shared tooling upgrades are reviewed and rolled out.
-- How isolated verification and whole-system auditing combine into a release decision.
+- Adopting standard `Module Specification` (`MODULE.md`), `Change Agreement`, and `Release Attestation` files across these repositories.
+- Migrating ML model artifacts to code-free bundles and auditing `api` vs. `implementation` exposure with binary-compatibility checks.
+- Adding commit-SHA staging feeds so consumer integration branches verify upstream candidates prior to public tag publication.
+- Versioning backend exported Android configurations alongside N-back HTTP contract checks.
+- Completing the `gradle.android-repo-setup` migration across remaining Android modules with Signing-Key isolation and enforced branch rulesets.
 
 ## Source references
 

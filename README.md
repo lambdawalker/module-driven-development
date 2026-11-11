@@ -13,42 +13,45 @@ Security and comprehensive auditability are the primary motivations. AI is expec
 ## Agreed foundation
 
 - Split software into small, well-defined units with cohesive responsibilities.
-- Maintain those units in independent repositories.
-- Start with feature boundaries, such as login or uploads; a feature can be further divided into backend, web, Android, and iOS modules.
+- Maintain leaf and feature modules in independent repositories, while distinguishing application composition hosts that assemble them.
+- Start with feature boundaries, such as login or uploads; a feature can be further divided into backend, web, Android, and iOS modules, or incubated as a build-isolated subproject until contracts settle.
 - Allow focused technical components to become modules when isolation makes difficult logic easier to solve and verify; keeping the resulting library is valid even with one consumer.
 - Automate repository setup and standardize publication and deployment through shared tooling, with rollout tracked per repository.
 - Judge boundaries by responsibility, complexity, and independent auditability. Line count alone is a poor measure.
-- Audit every aspect of a module, including data access, permissions, dependencies, delivery, and runtime behavior.
+- Audit every aspect of a module—proportional to its risk tier—including AI agent threat surfaces, data access, permissions, dependencies, delivery, version skew, resource budgets, and runtime behavior.
 - Examine interactions between modules as part of auditing the complete system.
 
-## Approval direction
+## Governance and approval direction
 
-Humans control meaningful changes, with one human approver as the baseline, including for a developer working alone with AI. One approval of the complete module agreement authorizes implementation. Acceptance can follow a developer-approved automatic policy or explicit human review; a human-review flag blocks automatic merging. Approval must be possible away from the workstation. The remote workflow remains **provisional (*) pending a practical trial and recorded notes**; GitHub is a candidate implementation rather than a platform requirement. Change classification starts with lightweight, context-sensitive guidance that each project refines. Reliable runner pause/resume behavior remains open.
+Humans control meaningful changes, with one human approver as the baseline, including for a developer working alone with AI. Governance separates three distinct records: a living **Module Specification** (durable boundaries, contracts, invariants, and access ceilings), a task-scoped **Change Agreement** (planned delta, acceptance cases, and recovery plan), and an immutable **Release Attestation** (artifact digest, verification evidence, and release sign-off).
+
+One human approval of a Change Agreement authorizes implementation of that delta. Eligibility for automatic acceptance versus mandatory human review is enforced by **deterministic CI policy gates** (such as public API/ABI diffs, manifest or permission changes, lockfile updates, and locked test-suite guards) rather than AI self-classification, paired with **context-isolated verification** to counter correlated AI mistakes.
+
+Library modules may publish verified candidate or versioned artifacts to unblock downstream consumer integration, whereas **deployable applications and live backend services require named Human QA sign-off** on the integrated release candidate before production promotion. Approval away from the workstation supports bounded scoping decisions, open questions, and rollout containment, while security-boundary changes and final QA remain workstation reviews. The remote approval workflow remains **provisional (*) pending a practical trial and recorded notes**; GitHub is a candidate implementation rather than a platform requirement.
 
 ## Read the draft
 
 | Document | Contents |
 | --- | --- |
-| [Topics needing more detail](docs/topics-needing-detail.md) | Open follow-ups, starting with an artifact-by-artifact recovery discussion |
-| [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
-| [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
-| [Specifications and approvals](docs/specifications-and-approvals.md) | Module agreement, evidence, automatic acceptance, adaptable change guidance, and provisional remote approval trial |
-| [Project Memory Graph](docs/project-memory-graph.md) | Proposed companion dashboard, API/MCP, and shared project memory across repositories, versions, obligations, and progress |
-| [Recovery planning guidelines](docs/recovery-planning-guidelines.md) | Artifact-specific recovery prompts, human ownership, and course correction during development |
-| [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
-| [Repository automation](docs/repository-automation.md) | Shared setup, artifact publication, and deployment conventions |
-| [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
+| [Topics needing more detail](docs/topics-needing-detail.md) | Open follow-ups, including artifact recovery, operational signal routing, and standard-based signed production authorization |
+| [Principles](docs/principles.md) | Module boundaries, leaf vs. host repositories, day-0 incubation, context-isolated verification, skew, and resource budgets |
+| [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, AI-specific failure modes, and structural countermeasures |
+| [Specifications and approvals](docs/specifications-and-approvals.md) | Three-artifact governance split, deterministic merge gates, context-isolated verification, library vs. app QA, and tiered remote approval |
+| [Project Memory Graph](docs/project-memory-graph.md) | Proposed companion graph, MCP prompt-injection boundaries, Git-native Phase 1 bootstrap, and impact analysis |
+| [Recovery planning guidelines](docs/recovery-planning-guidelines.md) | Pre-authorized break-glass containment vs. human-authorized recovery, client skew, and mid-sprint course correction |
+| [Audit scope](docs/audit-scope.md) | Comprehensive audit domains, AI agent threat model, risk-tiered depth, and delta re-audit triggers |
+| [Repository automation](docs/repository-automation.md) | Shared setup, cross-repo pre-release inner loop, transitive dependency governance, and signing-key isolation |
+| [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, motivating transitive governance and staging rules |
 
 ## Decisions still open
 
 Track concrete follow-ups in [Topics needing more detail](docs/topics-needing-detail.md), including the requested return to artifact-specific recovery guidance.
 
-- What information and evidence must every module publish?
-- How are contracts specified, owned, versioned, and tested across repositories?
-- What can AI decide autonomously, and what requires human judgment?
-- Who reviews the work, and how is verification kept sufficiently independent of implementation?
-- What evidence is required before release, and what changes trigger another audit?
-- How are compatible module versions and coordinated changes managed?
-- How are module boundaries evaluated as the system evolves?
+With the three-artifact governance split, deterministic merge-gate principle, context-isolated verification, and production Human QA gate captured in draft, the primary open engineering questions are:
 
-Module planning, the module agreement, evidence and acceptance paths, and adaptable change guidance are captured in the draft. Detailed release gates and a complete development lifecycle remain to be defined.
+- What exact file schemas and repository paths standardize the Module Specification, Change Agreement, and Release Attestation?
+- How should runners implement reliable pause, cryptographic decision verification, and idempotent resume for remote approvals?
+- How is context isolation enforced mechanically between implementer and verifier agent sessions?
+- Which exact risk-tier thresholds and delta conditions automatically trigger a renewed human security audit?
+- How will shared automation manage ephemeral cross-repository staging feeds, ecosystem BOM alignment, and N-back wire-compatibility checks?
+- Which empirical signals govern graduating an incubated subproject into its own repository or consolidating over-fragmented modules?

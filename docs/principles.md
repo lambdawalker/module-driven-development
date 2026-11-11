@@ -6,7 +6,7 @@
 
 The methodology assumes AI will do most of the development. Modules should provide a scope that AI can understand and work within, and that a reviewer can inspect.
 
-Specific responsibilities for humans, AI implementers, and reviewers remain to be defined.
+Specific responsibilities for humans, AI implementers, and independent verifiers must keep authorization and verification distinct from implementation.
 
 ### Small, well-defined units
 
@@ -18,7 +18,7 @@ Line count can prompt a review of the boundary; it does not automatically determ
 
 ### Independent source control
 
-Each module is maintained in its own repository. This creates a distinct place to track its changes, access, review history, and eventual releases.
+Each established module is maintained in its own repository. This creates a distinct place to track its changes, access, review history, and releases.
 
 A feature can consist of several modules. Login, for example, could have separate repositories for its backend, web integration, Android integration, and iOS integration. These repositories collectively implement the feature.
 
@@ -42,38 +42,67 @@ For Android, `gradle.android-repo-setup` is the intended shared tooling. Adoptio
 
 ### Comprehensive auditability
 
-Auditing covers all aspects of a module: implementation, dependencies, contracts, data, permissions, secrets, build and release processes, deployment, and runtime behavior.
+Auditing covers all aspects of a module: implementation, AI agent threat surfaces, dependencies, contracts, data, permissions, secrets, build and release processes, deployment, version skew, resource budgets, and runtime behavior.
 
-An audit must also examine assumptions and interactions across boundaries. Individually acceptable modules can form an insecure system.
+An audit must also examine assumptions and interactions across boundaries. Individually acceptable modules can form an insecure or unstable system.
 
 ## Proposed supporting rules
 
-The following rules support the agreed direction but remain proposals.
+The following rules support the agreed direction and address structural failure modes identified in review.
 
-### Describe responsibilities and contracts explicitly
+### Distinguish leaf modules from composition hosts
 
-State what a module owns, what it does not own, its inputs and outputs, error behavior, dependencies, and security assumptions.
+Not every repository plays the same structural role:
 
-A contract should describe relevant behavior as well as data shapes. For example, an upload endpoint accepting a user identifier does not establish who checks whether the caller may upload for that user.
+- **Leaf and feature module repositories** implement a single cohesive domain or technical capability (such as `Coordinates`, `Permissions`, or an auth feature library) under a single clear ownership boundary.
+- **Application and composition host repositories** (such as `go.attestra.aws`, mobile application shells, or transitional repositories undergoing extraction) select features, bind shared infrastructure, enforce system-wide budgets, and coordinate deployment.
 
-### Scope access to the task
+Composition hosts—and legacy repositories not yet split—may legitimately contain components owned by multiple teams with path-scoped ownership rules, whereas leaf module repositories should preserve single-team cohesion.
 
-Give AI development tools and runtime components only the repository, data, credentials, and permissions their work requires. Repository separation makes this practical only when access restrictions are actually enforced.
+### Incubate unsettled boundaries before extracting repositories
+
+Splitting a greenfield feature across multiple repositories before its domain concepts and contracts stabilize creates high multi-repo coordination churn.
+
+When boundaries are still fluid during day-0 discovery, incubate candidate modules as build-isolated subprojects (enforcing strict package visibility and compiler module boundaries) inside the host or parent repository. Extract a subproject into an independent repository once its contract stabilizes, multiple consumers emerge, access isolation is required, or difficult logic benefits from standalone verification.
+
+### Describe responsibilities, contracts, and resource budgets explicitly
+
+State what a module owns, what it does not own, its inputs and outputs, error behavior, dependencies, security assumptions, and resource ceilings.
+
+A contract must describe behavioral and operational commitments as well as data shapes:
+
+- **Authorization ownership:** an upload endpoint accepting a user identifier must state whether caller ownership is enforced inside the module or guaranteed by an upstream gateway.
+- **Cross-boundary version skew:** when deployed backends and installed mobile or web clients update on independent schedules, contracts must define backward-compatibility windows (N-back support), wire-schema evolution rules, and deprecation lifecycles.
+- **Resource and resilience budgets:** modules should declare concurrency/thread-pool usage, memory ceilings, binary/artifact size budgets, latency bounds, and retry/backoff behavior so composition hosts can prevent duplicate executors, APK bloat, or cascading retry storms.
+
+### Separate implementation context from verification context
+
+An AI implementer frequently encodes the same flawed assumption into both production code and its accompanying unit tests.
+
+To counter correlated mistakes, pair deterministic static/contract gates with **context-isolated verification**: run a separate verifier agent session supplied only with the approved Module Specification, Change Agreement, and public interfaces—never the implementer's reasoning trace or internal code structure—to author adversarial, boundary, and property-based checks. Approved acceptance tests must be protected against silent modification by the implementing agent.
+
+### Scope access and defend agent boundaries
+
+Give AI development tools, CI jobs, and runtime components only the repository, filesystem paths, network egress, data, and credentials their specific task requires. Repository separation provides security value only when least privilege is mechanically enforced:
+
+- Restrict agent network egress and package installation to approved registries to prevent data exfiltration and hallucinated dependency ("slopsquatting") attacks.
+- Treat external issues, pull request comments, third-party source comments, build logs, and shared project-memory text as untrusted inputs to defend against indirect prompt injection.
+- Never grant AI coding or review agents access to release signing keys, encrypted setup passphrases, or production credentials.
 
 ### Keep governance and runtime boundaries explicit
 
-A repository provides a source-control boundary. A package provides a distribution boundary. A process, service, or sandbox may provide a runtime boundary.
+A repository provides a source-control and access boundary. A package provides a distribution boundary. A process, service, or sandbox may provide a runtime boundary.
 
-Separate repositories do not automatically isolate runtime privileges, require network services, or require separate deployments. Modules can be libraries within one application.
+Separate repositories do not automatically isolate runtime privileges, require network services, or require separate deployments. Modules can be libraries compiled into one application.
 
 ### Preserve a view of the whole system
 
-Maintain enough system context to understand dependencies, trust boundaries, data flows, and compatible versions without requiring every task to inspect every implementation.
+Maintain enough system context to understand dependencies, trust boundaries, sub-repository ownership in composition hosts, data flows, and compatible versions without requiring every task to inspect every implementation.
 
-The location, format, and ownership of this system view remain open.
+Start with declarative, version-controlled metadata in each repository before introducing stateful coordination services; see [Project Memory Graph](project-memory-graph.md).
 
 ### Use evidence to reconsider boundaries
 
 A candidate boundary should make the responsibility easier to explain, verify, and audit.
 
-Frequent coordinated changes, circular dependencies, extensive shared state, or the need to inspect many other implementations may indicate that a boundary needs revision. These are review signals rather than automatic reasons to merge or split repositories.
+Frequent lockstep changes across repositories, circular dependencies, extensive shared state, manual artifact stripping, or the need to inspect many external implementations indicate that a boundary—or its contract encapsulation—needs revision. These are review signals rather than automatic rules to merge or split repositories.
