@@ -24,6 +24,22 @@ A feature can consist of several modules. Login, for example, could have separat
 
 The example illustrates possible boundaries; it is not a required repository naming scheme or a rule that every feature must have all four platforms.
 
+### Extract difficult logic for focused verification
+
+A module can be a technical component within a feature. Extraction is justified when it creates a clearer place to reproduce a problem, establish the behavior, and verify the implementation independently.
+
+The coordinates library illustrates this: coordinate logic was causing overlay problems, and separating it allowed focused work on correctness. This motivation comes from the project owner's account; the source study records the library and its consumer integration.
+
+A component does not need a large codebase or multiple consumers to justify an independent repository. After the problem is solved, reintegration is optional. Keep the library boundary when it continues to help understanding, verification, and maintenance and when reintegration offers little value.
+
+Extraction alone does not prove correctness. Verify the isolated behavior and its integration with the consuming library.
+
+### Shared automation makes independent repositories practical
+
+Repository independence should be supported by shared setup and delivery tooling. Automate recurring setup and apply a consistent publication or deployment standard while keeping module-specific configuration explicit.
+
+For Android, `gradle.android-repo-setup` is the intended shared tooling. Adoption is in progress; a target convention is distinct from a completed migration.
+
 ### Comprehensive auditability
 
 Auditing covers all aspects of a module: implementation, dependencies, contracts, data, permissions, secrets, build and release processes, deployment, and runtime behavior.

@@ -15,6 +15,8 @@ Security and comprehensive auditability are the primary motivations. AI is expec
 - Split software into small, well-defined units with cohesive responsibilities.
 - Maintain those units in independent repositories.
 - Start with feature boundaries, such as login or uploads; a feature can be further divided into backend, web, Android, and iOS modules.
+- Allow focused technical components to become modules when isolation makes difficult logic easier to solve and verify; keeping the resulting library is valid even with one consumer.
+- Automate repository setup and standardize publication and deployment through shared tooling, with rollout tracked per repository.
 - Judge boundaries by responsibility, complexity, and independent auditability. Line count alone is a poor measure.
 - Audit every aspect of a module, including data access, permissions, dependencies, delivery, and runtime behavior.
 - Examine interactions between modules as part of auditing the complete system.
@@ -26,6 +28,8 @@ Security and comprehensive auditability are the primary motivations. AI is expec
 | [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
 | [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
 | [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
+| [Repository automation](docs/repository-automation.md) | Shared setup, artifact publication, and deployment conventions |
+| [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
 
 ## Decisions still open
 
