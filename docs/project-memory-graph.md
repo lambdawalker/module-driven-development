@@ -19,6 +19,7 @@ The methodology remains usable without this software. The system may support oth
 - Provide a development dashboard and reports for humans.
 - Let AI record project information and retrieve it in later sessions.
 - Track overall progress and the versions used across interconnected repositories.
+- Support planning-time impact analysis and participation from affected teams, including teams sharing one repository.
 
 ## Proposed records
 
@@ -53,6 +54,40 @@ The graph could record:
 5. The final acceptance outcome and any remaining blockers.
 
 B can finish its own deliverable while A's integration is pending. B's reported completion must not automatically satisfy A's acceptance criteria. Expected failures explain work in progress; they do not constitute acceptance or authorize merging.
+
+## Impact analysis during module planning
+
+The graph should inform the planning conversation before implementation and publication. It should identify direct and indirect consumers, the versions they use, and the application compositions in which those consumers meet.
+
+Ownership must be representable below the repository level: two teams may own different components in the same repository and rarely communicate because they work in different locations or time zones. Repository membership alone is not sufficient to identify affected stakeholders.
+
+### Example: shared dependency, two teams
+
+Team A requests a change to a shared library. Team B owns another component that consumes that library. Both components are integrated into one application, and a planned dependency upgrade may affect both.
+
+During module planning, AI should:
+
+1. Find both consumer relationships, their owners, current versions, and the planned application version.
+2. Explain what may be affected, the assumptions involved, and the evidence supporting the impact assessment.
+3. Identify Team B as a participant to invite into the planning conversation, including through asynchronous contributions.
+4. Incorporate each affected team's requirements and consumer checks into the draft agreement or linked agreements.
+5. Record the required reviewers and which decision each review authorizes.
+
+Publishing a new library version and upgrading a consuming application are distinct events. Publication does not automatically mean every consumer adopts the version. Analyze both the release and the actual integration or dependency-resolution change.
+
+### Reviews reflect affected ownership
+
+One human approver remains the baseline for a solo developer or a change covered by that policy. For a change affecting two teams, the project can require two human reviews: one representative of the requesting team and one representative of the other affected team.
+
+This is contextual review coverage, not a universal requirement for two reviewers on every change. Record which teams must be represented and the scope of their approvals, rather than counting any two approvals as sufficient.
+
+Planning approval covers the agreed requirements. Publication or integration review covers the resulting evidence and candidate version, according to the project's policy. If both team reviews are required for publication, publication must wait for both; missing responses are not approval.
+
+The graph should expose pending contributions, required reviews, decisions, tested consumer combinations, and unresolved objections. It identifies who needs to participate; actual invitations and notifications require an authorized delivery mechanism.
+
+### Incomplete knowledge is visible
+
+Report the provenance and freshness of consumer and ownership information. Missing or stale relationships mean impact analysis is incomplete, not that no other team is affected. The agreement should make those gaps visible and record how the project decides to resolve them before proceeding.
 
 ## Version tracking and overall progress
 
