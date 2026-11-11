@@ -29,6 +29,7 @@ Humans control meaningful changes, with one human approver as the baseline, incl
 
 | Document | Contents |
 | --- | --- |
+| [Topics needing more detail](docs/topics-needing-detail.md) | Open follow-ups, starting with an artifact-by-artifact recovery discussion |
 | [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
 | [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
 | [Specifications and approvals](docs/specifications-and-approvals.md) | Module agreement, evidence, automatic acceptance, adaptable change guidance, and provisional remote approval trial |
@@ -39,6 +40,8 @@ Humans control meaningful changes, with one human approver as the baseline, incl
 | [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
 
 ## Decisions still open
+
+Track concrete follow-ups in [Topics needing more detail](docs/topics-needing-detail.md), including the requested return to artifact-specific recovery guidance.
 
 - What information and evidence must every module publish?
 - How are contracts specified, owned, versioned, and tested across repositories?
