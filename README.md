@@ -23,7 +23,7 @@ Security and comprehensive auditability are the primary motivations. AI is expec
 
 ## Approval direction
 
-Meaningful changes require human approval, with one human approver as the baseline, including for a developer working alone with AI. Approval must be possible away from the workstation. The remote workflow remains **provisional (*) pending a practical trial and recorded notes**; GitHub is a candidate implementation rather than a platform requirement. Exact approval boundaries and reliable runner pause/resume behavior remain open.
+Humans control meaningful changes, with one human approver as the baseline, including for a developer working alone with AI. One approval of the complete module agreement authorizes implementation. Acceptance can follow a developer-approved automatic policy or explicit human review; a human-review flag blocks automatic merging. Approval must be possible away from the workstation. The remote workflow remains **provisional (*) pending a practical trial and recorded notes**; GitHub is a candidate implementation rather than a platform requirement. Change classification starts with lightweight, context-sensitive guidance that each project refines. Reliable runner pause/resume behavior remains open.
 
 ## Read the draft
 
@@ -31,7 +31,7 @@ Meaningful changes require human approval, with one human approver as the baseli
 | --- | --- |
 | [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
 | [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
-| [Specifications and approvals](docs/specifications-and-approvals.md) | Proposed module specification, approval decisions, provisional remote workflow, and trial plan |
+| [Specifications and approvals](docs/specifications-and-approvals.md) | Module agreement, evidence, automatic acceptance, adaptable change guidance, and provisional remote approval trial |
 | [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
 | [Repository automation](docs/repository-automation.md) | Shared setup, artifact publication, and deployment conventions |
 | [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
@@ -46,4 +46,4 @@ Meaningful changes require human approval, with one human approver as the baseli
 - How are compatible module versions and coordinated changes managed?
 - How are module boundaries evaluated as the system evolves?
 
-The specification and approval discussion is captured as a draft. The next discussion topic is evidence required before release; a complete development lifecycle remains to be defined.
+Module planning, the module agreement, evidence and acceptance paths, and adaptable change guidance are captured in the draft. Detailed release gates and a complete development lifecycle remain to be defined.
