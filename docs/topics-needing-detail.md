@@ -44,6 +44,17 @@ A consuming team could request periodic checks of a condition such as private ve
 
 **Intended result:** adaptable guidance for planning and operational signals by artifact type, with concrete project examples. No monitoring job, notification integration, or schedule has been configured by recording this follow-up.
 
+### Additional signal sources to explore
+
+Return to the question: **“What could change around this artifact that would make our earlier acceptance no longer sufficient?”** These are candidate signals to investigate, not a finalized trigger policy.
+
+- [ ] **Changed use or data sensitivity:** for example, a private bucket starts holding identity documents instead of public product photos without a technical configuration change. Explore how teams declare new uses and when manual review is needed.
+- [ ] **Changed ownership:** a team reorganizes, a responsible person leaves, or responsibility transfers. Verify that someone accepts the existing obligations, access, and response duties.
+- [ ] **User reports and incidents:** accessibility complaints, unexpected access denials, corrupted output, and other reports may expose gaps in automated checks. Discuss triage and evidence.
+- [ ] **Surrounding-system changes:** dependency vulnerability advisories, external API behavior, and configuration changes may invalidate assumptions about an unchanged artifact.
+- [ ] **Changes to verification:** disabled checks, altered expected results, checks that stop running, and missing evidence should prompt investigation. Lost visibility is not evidence of a healthy artifact.
+- [ ] **Graph-based routing:** connect each signal to affected conditions, consumers, and teams; define who investigates, how they are notified, and which evidence supports a decision.
+
 ## Other open topics already identified
 
 These entries summarize remaining questions in the existing draft; they do not reopen decisions already established.
