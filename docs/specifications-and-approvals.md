@@ -15,7 +15,7 @@ These decisions describe the intended process. No notification service, separate
 
 ## Proposed module specification
 
-Keep a short, versioned specification inside each module repository. Its purpose is to bound the AI assignment and provide a basis for review. The precise filename, schema, and approval granularity remain open.
+Keep a short, versioned specification inside each module repository. Its purpose is to bound the AI assignment and provide a basis for review. The precise filename and schema remain open. Approval of the combined draft is described below.
 
 | Area | Proposed contents |
 | --- | --- |
@@ -37,7 +37,63 @@ This is a proposed example, **not a verified specification of the existing coord
 - Proposed evidence: independently established reference examples, rotations and image sizes, and invalid-input behavior.
 - Example open decision: whether points outside the image are accepted.
 
-Approval of an entire specification versus approval of selected boundaries and constraints has **not** been settled.
+## Module planning and the module agreement
+
+The planning conversation is called **module planning**. Its approved output is the **module agreement**.
+
+The human and AI craft a draft together, covering what will be built, boundaries and constraints, acceptance criteria, and the tests or other evidence that will demonstrate success. A human description can begin as a paragraph; the AI can also propose scenarios, deliverables, and verification methods for discussion.
+
+One explicit human approval covers the complete draft and authorizes implementation against that version. Separate approvals for each section or test case are not required. The agreed verification cases should be established before implementation; the precise handling of executable tests versus planned cases can be specified in the agreement.
+
+Routine implementation decisions remain within the approved scope. Material changes to scope, contracts, permissions, or acceptance criteria return for approval. Open assumptions must be visible rather than silently treated as approved requirements.
+
+## Evidence and acceptance
+
+Verification can use automated scenarios, manual testing, or both. The methodology does not mandate a particular test framework.
+
+- Automated evidence should identify the accepted cases and their results.
+- Manual testing can use an installable APK, temporary preview URL, or another usable deliverable, with instructions describing what the developer should check.
+- A pull request should connect the agreement, implementation revision, deliverable, and evidence. Failed, skipped, or pending checks should be visible.
+- Acceptance should leave a record in the pull request or an associated note, identifying the revision and the basis for acceptance.
+
+Implementation authorization and acceptance of the result are distinct decisions. Acceptance may be automatic under a policy authorized by the developer in advance, or may require a new human decision. Merge, publication, and deployment authority must follow the scope the developer authorized.
+
+### Automatic acceptance and human review
+
+For automatic acceptance, the developer authorizes a category of changes and its required checks. AI opens a pull request with evidence and may merge into the configured target branch only when the approved conditions are met and merging is authorized.
+
+For human review, AI prepares the pull request, evidence, and any testable deliverable; explains what needs manual inspection; notifies the developer; and leaves the pull request unmerged. A human-review flag blocks automatic merging.
+
+Passing checks is not permission to leave the approved scope. Proposed safeguards include keeping accepted criteria intact, preventing silent weakening or replacement of approved tests, and treating expanded access as a reason for consultation. Additional tests can supplement the approved checks.
+
+## Context-sensitive change guidance
+
+**Agreed direction: lightweight starting guidance for every project, refined as that project develops. These are guidelines, not a universal fixed classification.**
+
+AI can propose a classification as work proceeds and explain it using the project's context and module agreement. The human retains the final decision over the policy and new classifications. Existing authorization can cover automatic handling; AI should not turn its own classification into new permission.
+
+Judge significance by consequences rather than code size:
+
+- Who gains access or privileges?
+- What data moves, and does it reach a new destination?
+- What behavior, contract, or commitment do users and consumers rely on?
+- How broad is the effect, and how difficult is recovery?
+
+| Example | Context and starting guidance |
+| --- | --- |
+| New mobile permission | Expands device or user-data access; bring an unapproved permission to the human |
+| New public comic-store page | May fit automatic handling when it stays within approved scope and checks |
+| New site URL or route | Consider its purpose, destination, data flow, and consequences; a route affecting client documents or legal submissions deserves consultation |
+| Dependency patch | May fit an approved automatic policy when compatibility checks pass and its effects remain within scope |
+| Dependency changing authentication, licensing, or external services | Reason to consult the human rather than assume routine maintenance |
+| Coordinates implementation cleanup | May qualify for automatic handling if it preserves the approved behavior |
+| Coordinate-origin or mirroring convention change | Affects consumer expectations; reason to request review even for a tiny code change |
+
+These examples illustrate judgment; they do not establish that all changes in one industry are sensitive or that another industry's changes are harmless.
+
+Each project can refine the guidance through human decisions, recording the context and rationale so later classifications are consistent. New or uncertain categories should be proposed for a human decision; changes already covered by the approved policy can follow that policy.
+
+A particular project policy must still define its checks, target branches, authority, and exceptions. The human-review flag always takes precedence over automatic merging.
 
 ## Remote approval workflow (*)
 
@@ -116,10 +172,10 @@ After the trial, review the notes and explicitly decide which parts to retain or
 
 ## Remaining discussion
 
-- Exact criteria for meaningful changes and specification approval granularity.
+- Project-specific refinements to change classification and automatic acceptance policies.
 - Reliable pause, decision detection, and resume behavior.
 - Identity setup and enforcement for each supported infrastructure.
-- Evidence required before release — the next topic, not yet agreed.
+- Detailed evidence formats and release/publication gates beyond the acceptance direction recorded above.
 - Later topics: cross-module integration rules, maintenance, re-audit triggers, and recovery.
 
 Earlier lifecycle suggestions (specification, implementation, testing including adversarial cases, independent audit, and release) remain proposals rather than an adopted complete lifecycle.
