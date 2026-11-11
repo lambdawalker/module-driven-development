@@ -21,12 +21,17 @@ Security and comprehensive auditability are the primary motivations. AI is expec
 - Audit every aspect of a module, including data access, permissions, dependencies, delivery, and runtime behavior.
 - Examine interactions between modules as part of auditing the complete system.
 
+## Approval direction
+
+Meaningful changes require human approval, with one human approver as the baseline, including for a developer working alone with AI. Approval must be possible away from the workstation. The remote workflow remains **provisional (*) pending a practical trial and recorded notes**; GitHub is a candidate implementation rather than a platform requirement. Exact approval boundaries and reliable runner pause/resume behavior remain open.
+
 ## Read the draft
 
 | Document | Contents |
 | --- | --- |
 | [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
 | [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
+| [Specifications and approvals](docs/specifications-and-approvals.md) | Proposed module specification, approval decisions, provisional remote workflow, and trial plan |
 | [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
 | [Repository automation](docs/repository-automation.md) | Shared setup, artifact publication, and deployment conventions |
 | [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
@@ -41,4 +46,4 @@ Security and comprehensive auditability are the primary motivations. AI is expec
 - How are compatible module versions and coordinated changes managed?
 - How are module boundaries evaluated as the system evolves?
 
-The next iteration should turn these foundations into an explicit module definition and development lifecycle.
+The specification and approval discussion is captured as a draft. The next discussion topic is evidence required before release; a complete development lifecycle remains to be defined.
