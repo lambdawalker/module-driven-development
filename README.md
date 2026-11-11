@@ -32,6 +32,7 @@ Humans control meaningful changes, with one human approver as the baseline, incl
 | [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
 | [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
 | [Specifications and approvals](docs/specifications-and-approvals.md) | Module agreement, evidence, automatic acceptance, adaptable change guidance, and provisional remote approval trial |
+| [Project Memory Graph](docs/project-memory-graph.md) | Proposed companion dashboard, API/MCP, and shared project memory across repositories, versions, obligations, and progress |
 | [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
 | [Repository automation](docs/repository-automation.md) | Shared setup, artifact publication, and deployment conventions |
 | [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
