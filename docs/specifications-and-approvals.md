@@ -47,6 +47,12 @@ One explicit human approval covers the complete draft and authorizes implementat
 
 Routine implementation decisions remain within the approved scope. Material changes to scope, contracts, permissions, or acceptance criteria return for approval. Open assumptions must be visible rather than silently treated as approved requirements.
 
+### Recovery and course correction
+
+During planning, ask what happens if the change fails and identify a human who accepts recovery responsibility. Use [Recovery planning guidelines](recovery-planning-guidelines.md) for artifact-specific prompts, including database state, assets, ownership, authorization, and recovery verification. The examples guide conversation rather than impose universal procedures.
+
+If development reveals a material new need, such as an unplanned database or migration, developer and AI revisit the agreement. Reassess impact and recovery, involve newly affected teams through an authorized channel, and obtain the required approvals for the revised scope before proceeding with the affected work. This is normal during development, including mid-sprint. Independent authorized work may continue.
+
 ## Evidence and acceptance
 
 Verification can use automated scenarios, manual testing, or both. The methodology does not mandate a particular test framework.
@@ -176,6 +182,6 @@ After the trial, review the notes and explicitly decide which parts to retain or
 - Reliable pause, decision detection, and resume behavior.
 - Identity setup and enforcement for each supported infrastructure.
 - Detailed evidence formats and release/publication gates beyond the acceptance direction recorded above.
-- Later topics: cross-module integration rules, maintenance, re-audit triggers, and recovery.
+- Later topics: maintenance and re-audit triggers; integration is discussed in the project memory concept, and recovery guidance is now linked above.
 
 Earlier lifecycle suggestions (specification, implementation, testing including adversarial cases, independent audit, and release) remain proposals rather than an adopted complete lifecycle.
