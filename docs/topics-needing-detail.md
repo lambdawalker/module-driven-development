@@ -56,6 +56,22 @@ Return to the question: **“What could change around this artifact that would m
 - [ ] **Behavioral analytics:** explore unexpected increases or decreases in feature usage, completion rates, abandonment, retries, and time to complete as indirect signals from users. Compare with relevant traffic, historical patterns, rollout versions, and affected user groups; a usage spike may reflect retries rather than success, and a drop may reflect lower traffic rather than a broken feature. Check analytics instrumentation and delivery before attributing a change to the product. Link the signal through the graph to responsible teams for investigation, not automatic rollback. Decide appropriate baselines, observation windows, data-access/privacy constraints, and response thresholds during project planning.
 - [ ] **Graph-based routing:** connect each signal to affected conditions, consumers, and teams; define who investigates, how they are notified, and which evidence supports a decision.
 
+## Signed production authorization — return to this conversation
+
+**Requested follow-up. Concept only; mechanism not selected or implemented.**
+
+Explore an internal production-promotion authorization signed by a named human using a mobile phone or a hardware security key (for example, a USB security key). The intent is a verifiable internal record that identifies who authorized promotion through which registered credential and binds that authorization to the artifact being promoted.
+
+This serves the human QA release decision; it is distinct from Google Play or Apple distribution signing and does not replace those platform requirements.
+
+- [ ] Explore phone-based and hardware-key approaches and their actual signing capabilities; do not assume every authentication key can sign arbitrary artifacts.
+- [ ] Define whether the signature covers the artifact directly or an authorization statement containing its digest, tested build/version, destination environment, QA decision, and authorization scope.
+- [ ] Design the internal authorization log and how promotion verifies the record against the exact candidate.
+- [ ] Discuss credential enrollment, human identity, loss/revocation, and verification of historical records.
+- [ ] Distinguish proof of authorization from the QA evidence itself; a signature does not prove that testing was sufficient.
+
+Keep this as a note for a later design conversation rather than a chosen cryptographic architecture.
+
 ## Other open topics already identified
 
 These entries summarize remaining questions in the existing draft; they do not reopen decisions already established.
