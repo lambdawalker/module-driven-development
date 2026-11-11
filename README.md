@@ -1,1 +1,40 @@
-# module-driven-development
+# Module-Driven Development
+
+A developing methodology for software built primarily by AI, organized into small, well-defined, independently maintained modules.
+
+**Status: initial discussion draft.** This repository captures the ideas agreed so far and keeps proposals and open decisions explicit. It does not yet define a complete development process.
+
+## Purpose
+
+Make software easier to understand, change, and audit by giving each module a bounded responsibility and its own source-control repository.
+
+Security and comprehensive auditability are the primary motivations. AI is expected to perform most development work. Parallel execution is not the primary objective.
+
+## Agreed foundation
+
+- Split software into small, well-defined units with cohesive responsibilities.
+- Maintain those units in independent repositories.
+- Start with feature boundaries, such as login or uploads; a feature can be further divided into backend, web, Android, and iOS modules.
+- Judge boundaries by responsibility, complexity, and independent auditability. Line count alone is a poor measure.
+- Audit every aspect of a module, including data access, permissions, dependencies, delivery, and runtime behavior.
+- Examine interactions between modules as part of auditing the complete system.
+
+## Read the draft
+
+| Document | Contents |
+| --- | --- |
+| [Principles](docs/principles.md) | Module boundaries, platform separation, and what independence means |
+| [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
+| [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
+
+## Decisions still open
+
+- What information and evidence must every module publish?
+- How are contracts specified, owned, versioned, and tested across repositories?
+- What can AI decide autonomously, and what requires human judgment?
+- Who reviews the work, and how is verification kept sufficiently independent of implementation?
+- What evidence is required before release, and what changes trigger another audit?
+- How are compatible module versions and coordinated changes managed?
+- How are module boundaries evaluated as the system evolves?
+
+The next iteration should turn these foundations into an explicit module definition and development lifecycle.
