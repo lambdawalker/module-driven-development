@@ -1,6 +1,8 @@
-# Module-Driven Development
+# Modular Assurance
 
-A developing methodology for software built primarily by AI, organized into small, well-defined, independently maintained modules.
+A methodology for accountable AI software development.
+
+Modular Assurance organizes software built primarily by AI into small, well-defined, independently maintained modules, supported by explicit agreements, verification evidence, and human accountability.
 
 **Status: initial discussion draft.** This repository captures the ideas agreed so far and keeps proposals and open decisions explicit. It does not yet define a complete development process.
 
