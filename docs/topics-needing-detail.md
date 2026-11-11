@@ -19,6 +19,31 @@ The [recovery planning guidelines](recovery-planning-guidelines.md) contain an i
 
 **Intended result:** adaptable, artifact-specific conversation guidance with worked examples and explicit limitations. Keep these as guidelines, not universal rules; each project's module agreement determines its actual recovery plan.
 
+## Artifact signals and scheduled checks — return to this conversation
+
+**Requested follow-up. Not yet complete.**
+
+Start with artifacts actually used in the current project, such as databases, S3 buckets, and their configuration. Extend the artifact catalog above with the conditions each consuming team relies on and the signals that reveal whether those conditions still hold.
+
+The discussion identified two complementary signal sources:
+
+- **During planning:** a proposed artifact-state change is checked against the graph, revealing dependent teams that need to join the conversation.
+- **After release / during operation:** a separate scheduled process checks the actual state of an important artifact, helping detect mistakes or drift even when planning did not prevent them.
+
+A consuming team could request periodic checks of a condition such as private versus public access. Intervals of **10 or 30 minutes were examples**, not chosen schedules or universal defaults. This capability could belong to the software that includes Project Memory Graph; implementation and ownership remain to be designed.
+
+- [ ] Inventory relevant artifacts from the current project as the starting point for worked examples.
+- [ ] For each artifact, connect the required condition to its signal, verification method, dependent teams, and responsible human.
+- [ ] Explore scheduled artifact-state checks (“heartbeat” checks) alongside planning signals and change events.
+- [ ] Choose check intervals according to consequences, acceptable detection delay, and operational cost.
+- [ ] Define how observations and evidence link into the graph and trigger notifications or review for affected teams.
+- [ ] Distinguish a failed condition from an inconclusive check, insufficient permissions, or a missed/stale monitoring run.
+- [ ] Discuss monitor ownership, access, alert handling, and how to know that the monitoring process itself is working.
+- [ ] Link confirmed problems to the agreed human-authorized recovery process.
+- [ ] Evaluate which parts belong in the graph companion system and which integrate external monitoring.
+
+**Intended result:** adaptable guidance for planning and operational signals by artifact type, with concrete project examples. No monitoring job, notification integration, or schedule has been configured by recording this follow-up.
+
 ## Other open topics already identified
 
 These entries summarize remaining questions in the existing draft; they do not reopen decisions already established.
