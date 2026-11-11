@@ -72,6 +72,16 @@ For human review, AI prepares the pull request, evidence, and any testable deliv
 
 Passing checks is not permission to leave the approved scope. Proposed safeguards include keeping accepted criteria intact, preventing silent weakening or replacement of approved tests, and treating expanded access as a reason for consultation. Additional tests can supplement the approved checks.
 
+### Human QA before production release
+
+**Decision established in discussion:** a named human tests the integrated release candidate and records that it was QA'd and is ready for production. Automatic acceptance and merging do not substitute for this production release decision.
+
+QA is a responsibility, not a requirement to employ another person: a solo developer can also be the human tester. Record the tested build/version, coverage, findings or known limitations, and the human's release decision. If the candidate changes afterward, reassess the affected checks before applying the sign-off.
+
+Agreed acceptance scenarios and exploratory testing can inform this review. Operational monitoring remains another layer for problems that escape pre-release testing.
+
+A later design discussion will explore binding internal production authorization to the artifact through a phone or hardware security key; see [Signed production authorization](topics-needing-detail.md#signed-production-authorization--return-to-this-conversation). No signing mechanism has been selected or configured.
+
 ## Context-sensitive change guidance
 
 **Agreed direction: lightweight starting guidance for every project, refined as that project develops. These are guidelines, not a universal fixed classification.**
