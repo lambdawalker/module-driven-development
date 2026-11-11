@@ -33,6 +33,7 @@ Humans control meaningful changes, with one human approver as the baseline, incl
 | [Benefits and tradeoffs](docs/benefits-and-tradeoffs.md) | Expected advantages, costs, and failure modes |
 | [Specifications and approvals](docs/specifications-and-approvals.md) | Module agreement, evidence, automatic acceptance, adaptable change guidance, and provisional remote approval trial |
 | [Project Memory Graph](docs/project-memory-graph.md) | Proposed companion dashboard, API/MCP, and shared project memory across repositories, versions, obligations, and progress |
+| [Recovery planning guidelines](docs/recovery-planning-guidelines.md) | Artifact-specific recovery prompts, human ownership, and course correction during development |
 | [Audit scope](docs/audit-scope.md) | Proposed coverage and evidence for comprehensive audits |
 | [Repository automation](docs/repository-automation.md) | Shared setup, artifact publication, and deployment conventions |
 | [Auth ecosystem case study](docs/case-studies/auth-ecosystem.md) | Source-backed Android and backend composition example, including coordinates extraction |
