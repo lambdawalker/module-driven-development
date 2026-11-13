@@ -2,7 +2,7 @@
 
 **Agreed requirement:** auditing covers every aspect of a module, including data access, permissions, AI-specific threat surfaces, and cross-module interactions, scaled proportionally to module risk.
 
-The coverage and risk-tier model below make that requirement actionable while avoiding review fatigue on low-risk leaf libraries. Exact evidence schemas and automated policy thresholds remain open.
+The coverage below makes that requirement actionable; the tier model is a proposed project-policy template for proportionate review. Exact evidence schemas and automated policy thresholds remain open.
 
 ## Coverage
 
@@ -30,19 +30,19 @@ Evidence must explain why any domain is inapplicable (for example, zero network 
 
 ## Risk tiers and delta-scoped audits
 
-Applying identical manual audit ceremony to a stateless geometry helper and an authentication backend causes reviewer fatigue and weakens scrutiny where it matters most. Modules declare one of three risk tiers in their **Module Specification**:
+Applying identical manual audit ceremony to a stateless geometry helper and an authentication backend causes reviewer fatigue and weakens scrutiny where it matters most. Projects may adopt the following tiers or an equivalent risk model. Classification considers capabilities, data sensitivity, failure consequences, affected consumers, and blast radius. Record the rationale in the Module Specification; implementation type alone never assigns a tier. A pure mathematical component used for identity decisions, payments, or safety may need critical-trust scrutiny.
 
 | Tier | Profile and examples | Baseline and ongoing audit expectations |
 | --- | --- | --- |
-| **Tier 1 — Critical trust & shared tooling** | Auth, cryptography, key attestation, permissions, IAM/Pulumi composition, payment/contract signing, and shared CI/release plugins (`gradle.android-repo-setup`) | Full human-led baseline audit across all domains, workstation-only review for boundary/code changes, context-isolated adversarial testing, and mandatory delta audit on any security, dependency, or contract touch. |
+| **Tier 1 — Critical trust & shared tooling** | Auth, cryptography, key attestation, permissions, IAM/Pulumi composition, payment/contract signing, and shared CI/release plugins (`gradle.android-repo-setup`) | Full human-led baseline audit across all domains, human review with sufficient inspection capability for boundary/code changes, context-isolated adversarial testing, and mandatory delta audit on any security, dependency, or contract touch. |
 | **Tier 2 — Stateful, networked, or UI feature modules** | Feature backends, storage/S3 adapters, camera/ML integration libraries (`Card Detector`) | Targeted baseline audit focused on contracts, permissions, data lifecycle, version skew, and resource budgets; automated CI gates for routine internal changes; delta human review when deterministic escalation gates fire. |
-| **Tier 3 — Pure-compute deterministic leaf modules** | Stateless, zero-I/O, zero-permission libraries with minimal or zero dependencies (`Coordinates`) | Lightweight boundary verification proving absence of I/O, network, and permissions, paired with strong mathematical/invariant suites authored by a context-isolated verifier and automated ABI/dependency gates. |
+| **Tier 3 — Limited-consequence modules** | For example, a stateless, zero-I/O helper whose failure has bounded consequences; Coordinates requires assessment of its actual consumers | Proportionate source and boundary review, evidence for declared capability limits, independent invariant tests, and appropriate compatibility/dependency checks. |
 
 ### Baseline audits versus delta re-audits
 
 A **baseline audit** establishes initial trust for a module revision and its declared tier. Subsequent changes within unchanged boundaries rely on automated deterministic gates and context-isolated verification unless a **re-audit trigger** occurs:
 
-- Elevating module capabilities, permissions, network egress, or risk tier.
+- Changing module capabilities, permissions, network egress, consumer consequences, or risk classification (including a proposed downgrade).
 - Modifying `Tier 1` security logic, cryptographic primitives, or shared release automation.
 - Introducing new external dependencies or receiving a relevant supply-chain/vulnerability advisory.
 - Changing data sensitivity (for example, storing identity documents in a bucket previously audited for public thumbnails).

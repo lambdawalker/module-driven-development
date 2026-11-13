@@ -48,19 +48,21 @@ A published Android library and a deployed backend are different deliverables. B
 
 ## Pre-release inner loop across repositories
 
-When a change spans multiple repositories (for example, `Coordinates` → `Card Detector` → `Auth`), cutting permanent public release tags just to test whether a downstream consumer branch compiles and passes obligation checks creates version spam and broken intermediate releases. Shared tooling should support a three-stage progression:
+When a change spans multiple repositories (for example, `Coordinates` → `Card Detector` → `Auth`), cutting permanent public release tags just to test whether a downstream consumer branch compiles and passes obligation checks creates version spam and broken intermediate releases. The following is a proposed reference workflow; projects may use equivalent mechanisms that preserve artifact identity and authorization:
 
 1. **Local composite inner loop:** developers and local agents use build-system composition (such as Gradle `includeBuild`, Go `go.work` workspaces, or local build-scoped Maven repositories) to iterate across adjacent modules without mutating committed release coordinates.
-2. **CI cross-repo staging loop:** pull requests or integration branches publish immutable, commit-SHA-versioned candidate artifacts (for example, `0.3.0-sha.<commit>`) to an internal or ephemeral staging registry. Waiting consumer integration branches resolve that exact candidate digest to verify consumer obligations before any public version is reserved.
-3. **Public release promotion guard:** merging to `main` and cutting a public release strictly rejects local path overrides, `SNAPSHOT` coordinates, or ephemeral staging dependencies—requiring confirmed public dependency versions and immutable hashes.
+2. **CI cross-repo staging loop:** under approved candidate-publication policy and candidate checks, unmerged pull requests or integration branches may publish immutable, commit-SHA-versioned candidate artifacts (for example, `0.3.0-sha.<commit>`) to an internal or ephemeral staging registry. Waiting consumer integration branches resolve that exact candidate digest to verify consumer obligations before any public version is reserved. Staging credentials cannot publish public releases or deploy to production.
+3. **Merge and public release guards:** project policy defines whether integration branches or `main` may temporarily reference restricted candidates. Public releases reject local path overrides, mutable `SNAPSHOT` coordinates, and ephemeral staging dependencies, requiring confirmed public dependencies and immutable hashes. Final consumer checks run against the published artifacts and actual resolved dependency graph. Reuse candidate evidence only when documented equivalence covers binaries, metadata, dependencies, and configuration; otherwise rebuild and repeat affected checks.
+
+For example, test an unmerged Coordinates candidate in Card Detector and its candidate in Auth. Release Coordinates first, verify Card Detector with that public artifact, then release Card Detector and verify Auth with the final dependency combination. Candidate success does not authorize public publication or skip final verification.
 
 ## Dependency and transitive version governance
 
 Independent module release cycles quickly trigger diamond-dependency conflicts if transitive boundaries are leaky (as seen when `Auth` manually unpacked model assets from an AAR to dodge an older transitive core library):
 
-- **Internalize dependencies by default:** library modules must declare dependencies as `implementation` (or private internal imports) unless a dependency's types intentionally form part of the module's public contract (`api`).
+- **Internalize dependencies by default:** for Gradle libraries, prefer dependencies declared as `implementation` (or private internal imports) unless a dependency's types intentionally form part of the module's public contract (`api`).
 - **Separate data/ML assets from runtime code:** package ML weights, schemas, and static calibration assets as code-free asset bundles or raw artifacts with versioned metadata manifests rather than embedding them inside AARs/JARs coupled to older runtime classes.
-- **Align shared foundations via BOMs and ABI checks:** maintain an ecosystem Bill of Materials (or shared version platform) for cross-cutting runtime libraries, and enforce automated binary compatibility checks (such as Kotlin `binary-compatibility-validator` and wire-schema linters) in CI on every pull request.
+- **Align shared foundations and verify compatibility:** select ecosystem-appropriate dependency alignment and compatibility checks. A Gradle BOM/platform and ABI checks are reference options, not requirements for every language or project. `implementation` hides dependencies from consumer compile APIs; it does not remove runtime transitive dependencies or their version conflicts. Inspect the resolved dependency graph.
 
 ## Credential isolation and repository protection
 
@@ -74,9 +76,9 @@ Because shared automation provisions signing keys, GitHub environments, and loca
 
 1. Maintain shared setup and delivery behavior in versioned, `Tier 1`-audited tooling instead of reproducing scripts per repository.
 2. Keep repository-specific identity, artifact profile (AAR, Kotlin/JVM JAR, code-free model bundle, Go module), resource budgets, and verification commands in reviewable configuration.
-3. Check generated workflows and branch-protection rulesets for drift, and require human workstation review when upgrading shared tooling pins.
+3. Check generated workflows and branch-protection rulesets for drift, and require appropriately scoped human review when upgrading shared tooling pins.
 4. Provide local composite-build hooks and commit-SHA staging feeds so multi-repo changes are verified end-to-end before reserving public versions.
-5. Enforce `implementation`-by-default dependency scoping, automated ABI/wire compatibility checks, and ecosystem BOM alignment.
+5. Select appropriate dependency encapsulation, resolved-version checks, and ABI/wire compatibility checks; use BOM alignment where useful.
 6. Isolate all signing keys, encrypted setup passphrases, and deployment credentials strictly outside AI agent sandboxes.
 7. Emit an immutable **Release Attestation** recording source SHA, artifact digest, resolved lockfiles, tooling version, and verification/QA proofs for every release or deployment.
 8. Keep publication and deployment explicit, idempotent operations with preserved state for recovery.

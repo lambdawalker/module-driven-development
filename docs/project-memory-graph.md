@@ -62,7 +62,7 @@ The graph informs planning before implementation or publication, surfacing direc
 
 ### Reconciling repository independence with multi-team ownership
 
-As defined in [Principles](principles.md#distinguish-leaf-modules-from-composition-hosts), **leaf and feature module repositories** maintain single-team ownership over one cohesive responsibility. However, **application composition hosts** (such as `go.attestra.aws` or unified mobile shell apps) and legacy repositories undergoing gradual extraction often bring together components owned by different teams across locations or time zones.
+As defined in [Principles](principles.md#distinguish-leaf-modules-from-composition-hosts), **leaf and feature module repositories** maintain explicit ownership over one cohesive responsibility. However, **application composition hosts** (such as `go.attestra.aws` or unified mobile shell apps) and legacy repositories undergoing gradual extraction often bring together components owned by different teams across locations or time zones.
 
 Ownership in the graph must therefore support optional **sub-repository path/component granularity** (mirroring `CODEOWNERS` or subproject boundaries) inside composition hosts and transitional repos, rather than assuming repository-level membership alone identifies every stakeholder.
 
@@ -99,21 +99,23 @@ Because AI agents read Project Memory Graph records via MCP during planning and 
 - **Treat free-text fields as untrusted data:** issue summaries, external user reports, commit notes, and free-form descriptions retrieved via MCP must be delineated as untrusted data and never interpreted as system instructions or authorization overrides.
 - **Use strict typed schemas for control state:** status transitions, approval flags, risk tiers, artifact digests, and reviewer identities must use schema-validated enums, cryptographic hashes, and authenticated principal IDs rather than free-text prose.
 - **Scope write permissions per repository and role:** an agent working on Module B may post candidate build links for Module B, but cannot mark Consumer A's obligation as accepted or clear a human-review requirement.
-- **Single source of authority:** Git repositories and enforced CI/review records remain authoritative for code, specifications, and approvals; the graph indexes and links to those immutable URLs/SHAs rather than creating a competing approval ledger.
+- **Single source of authority:** projects designate authoritative sources for specifications, evidence, and approvals. In the Git-backed reference approach, the graph indexes immutable Git revisions and authenticated CI/review records. Editable ownership metadata or an agent's completion claim cannot grant authorization.
 
 ## Phased bootstrap and operational monitoring boundary
 
-### Phase 1: Git-native declarative manifests (recommended solo/small-team start)
+### Phase 1: Git-native declarative manifests (reference option)
 
 Avoid operating a separate database and stateful web service before repository count demands it:
 
 1. Each repository checks in a small, schema-validated manifest (for example, `MODULE.yaml` or frontmatter in `MODULE.md`) declaring module ID, role (leaf vs. host), owner, risk tier, exported contracts, and consumed module coordinates.
 2. A lightweight CI job or local CLI aggregates manifests and GitHub PR/release metadata across repositories into a deterministic JSON graph artifact exposed via a local MCP server and static HTML/Markdown summary.
-3. Git remains the sole source of truth, eliminating split-brain reconciliation and concurrent database write races.
+3. Record every contributing repository revision, retrieval time, policy/agreement revision, and missing or stale source in the generated snapshot. Git-backed storage avoids a separate mutable coordination database, but does not make independent repositories an atomic snapshot or eliminate conflicting plans.
+4. Before acceptance or promotion, revalidate the snapshot's relevant assumptions against current authoritative revisions and resolved artifacts. Conflicting obligations, overlapping agreements, or outdated planned versions require reconciliation by their authorized owners; last-write-wins is not an approval policy. Unrelated authorized work may continue.
+5. Track declared, resolved, tested, published, and deployed/supported versions separately. New releases do not imply adoption, and installed clients may remain on older supported combinations.
 
 ### Phase 2: Dedicated coordination service
 
-Introduce persistent storage, live webhook ingestion, cross-repo obligation queues, and interactive dashboards only when multi-team concurrency or cross-repo query volume outgrows static CI aggregation.
+A dedicated service with persistent storage, live webhook ingestion, cross-repo obligation queues, and interactive dashboards is an alternative when multi-team concurrency or cross-repo query volume outgrows static CI aggregation.
 
 ### Operational monitoring boundary
 

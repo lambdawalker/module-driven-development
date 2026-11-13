@@ -29,7 +29,7 @@ These statements describe declarations inspected in current source. Auth pins ol
 Two observations in the Android chain directly motivate the transitive dependency rules in [Repository automation](../repository-automation.md#dependency-and-transitive-version-governance):
 
 - **Manual AAR asset extraction as a boundary smell:** Auth's build logic unpacks model files from the Card model release artifact to avoid pulling in the model AAR's classes and older transitive core dependency. Packaging ML weights and metadata manifests as code-free asset artifacts eliminates the need for consumers to strip classes manually.
-- **Explicit `api` versus `implementation` scoping:** Card Detector exports `Coordinates` and `YOLO` via Gradle `api`. Under the methodology's transitive governance rules, `api` exposure should be reserved strictly for types intentionally surfaced in Card Detector's public contract, internalizing underlying inference details behind `implementation` and guarding public signatures with automated ABI checks.
+- **Explicit `api` versus `implementation` scoping:** Card Detector exports `Coordinates` and `YOLO` via Gradle `api`. Under the proposed Gradle reference policy, `api` exposure should be reserved strictly for types intentionally surfaced in Card Detector's public contract, internalizing underlying inference details behind `implementation` and guarding public signatures with automated ABI checks.
 
 ## Backend composition
 
@@ -57,8 +57,8 @@ The current repository contains explicit image-space models and tests for transf
 
 This illustrates two complementary verification scopes:
 
-- The extracted library (`Tier 3` pure-compute leaf profile) checks coordinate invariants and mathematical contracts without camera or UI noise.
-- The consumer (`Tier 2` feature integration profile) checks how those operations apply to camera preview spaces and overlay rendering.
+- The extracted library (pure-compute behavior; risk depends on its consumers) checks coordinate invariants and mathematical contracts without camera or UI noise.
+- The consumer (feature integration behavior; risk requires project assessment) checks how those operations apply to camera preview spaces and overlay rendering.
 
 The presence of tests is evidence of intended coverage, not a claim that tests were run or that extraction established complete correctness. Pairing `Coordinates` with context-isolated invariant testing further protects against correlated AI assumptions.
 
@@ -80,7 +80,7 @@ The intended model is independently owned modules supported by common, versioned
 
 The example supports module boundaries based on cohesive responsibility and verification needs, clarifies the distinction between **leaf module repositories** and **application composition hosts**, and shows that one leaf repository can legitimately include a library plus its demo host, tests, documentation, and delivery configuration.
 
-Remaining ecosystem-level engineering tasks include:
+Proposed ecosystem improvements to assess in separate implementation work include:
 
 - Adopting standard `Module Specification` (`MODULE.md`), `Change Agreement`, and `Release Attestation` files across these repositories.
 - Migrating ML model artifacts to code-free bundles and auditing `api` vs. `implementation` exposure with binary-compatibility checks.

@@ -59,21 +59,21 @@ This internal governance signature proves *which named human authorized producti
 
 To avoid inventing custom cryptography or hitting hardware-token payload limits, evaluate established standards first:
 
-- [ ] **Canonical attestation payload:** sign an **in-toto / SLSA v1.0 attestation statement** (JSON predicate binding source commit SHA, immutable artifact SHA-256 digest, resolved BOM/dependency digest, target environment, QA summary hash, timestamp, and authorization scope) rather than raw multi-megabyte binaries.
-- [ ] **Hardware security key path (workstation):** evaluate **OpenSSH FIDO2 resident keys** (`ssh-keygen -Y sign` with `sk-ssh-ed25519@openssh.com` or `sk-ecdsa-sha2-nistp256@openssh.com` requiring physical touch + PIN/biometric) and **Sigstore / Cosign** hardware-token signing.
+- [ ] **Candidate attestation format:** evaluate an in-toto statement with an appropriate human-authorization predicate, linked to build provenance where available (binding source commit SHA, immutable artifact SHA-256 digest, resolved BOM/dependency digest, target environment, QA summary hash, timestamp, and authorization scope) rather than raw multi-megabyte binaries.
+- [ ] **Hardware security key path:** evaluate **OpenSSH FIDO2 resident keys** with tested user-presence/user-verification policy and compatible signing tooling and **Sigstore / Cosign** hardware-token signing.
 - [ ] **Mobile phone path:** evaluate **WebAuthn / Passkey assertions** signing a challenge derived from the canonical Release Attestation SHA-256 digest, verifying user-verification (`uv`) flags and credential binding.
 - [ ] **Verification and transparency log:** define how deployment pipelines verify the signature against an enrolled maintainer public-key registry (protected outside AI agent write scope) and append records to an append-only audit log before releasing credentials to deploy.
 - [ ] **Key lifecycle:** specify enrollment ceremony, backup key requirements for solo developers, lost/compromised key revocation without invalidating historical pre-revocation attestations, and separation between QA evidence quality and cryptographic proof of sign-off.
 
 ## Other open topics already identified
 
-Baseline structural rules for the three-artifact split, deterministic CI merge gates, context-isolated verification, risk-tiered audits, inner-loop staging, and Phase 1 Git-native manifests are now drafted in their respective documents. Concrete engineering follow-ups remain:
+The three-record model and verification responsibilities are documented. Risk tiers, staging tooling, and Git-native manifests remain project-policy or reference proposals requiring practical validation. Concrete follow-ups remain:
 
 - [ ] **Governance file schemas:** finalize exact YAML/Markdown schemas for `MODULE.md` (Module Specification), Change Agreements, and Release Attestations.
-- [ ] **Remote approval runner trial:** test GitHub App/bot identity setup, enforced branch rulesets, mobile vs. workstation routing, commit-SHA approval binding, revision invalidation, and idempotent runner resume; record trial notes in [Specifications and approvals](specifications-and-approvals.md).
-- [ ] **Context-isolated verifier harness:** prototype the clean-room CI/agent invocation that feeds only `MODULE.md`, Change Agreement, and public interfaces to the adversarial verifier while enforcing hash guards on locked test files.
+- [ ] **Remote approval runner trial:** test GitHub App/bot identity setup, enforced branch rulesets, evidence and inspection-capability routing, commit-SHA approval binding, revision invalidation, and idempotent runner resume; record trial notes in [Specifications and approvals](specifications-and-approvals.md).
+- [ ] **Context-isolated verifier harness:** prototype the clean-room CI/agent invocation that feeds only `MODULE.md`, Change Agreement, and public interfaces to the adversarial verifier while enforcing protected-baseline guards on locked test files; also prototype source/security review with implementation access.
 - [ ] **Cross-repo inner-loop & BOM tooling:** extend [Repository automation](repository-automation.md) (`gradle.android-repo-setup` and Go composition tooling) with commit-SHA staging feeds, `binary-compatibility-validator` gates, BOM alignment, and ruleset drift checks.
-- [ ] **Phase 1 Git-native graph prototype:** test CI manifest aggregation and read-only MCP query usefulness against real repositories before building any stateful Phase 2 service; see [Project Memory Graph](project-memory-graph.md).
+- [ ] **Phase 1 Git-native graph prototype:** test CI manifest aggregation, revision-vector freshness, conflicting plans, and read-only MCP query usefulness against real repositories; compare with the dedicated-service option; see [Project Memory Graph](project-memory-graph.md).
 - [ ] **Boundary graduation and lifecycle rules:** define practical metrics for graduating day-0 subprojects into standalone repos, enforcing N-back client deprecation windows, and retiring obsolete modules.
 
 ## How to close a follow-up

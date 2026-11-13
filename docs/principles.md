@@ -54,16 +54,16 @@ The following rules support the agreed direction and address structural failure 
 
 Not every repository plays the same structural role:
 
-- **Leaf and feature module repositories** implement a single cohesive domain or technical capability (such as `Coordinates`, `Permissions`, or an auth feature library) under a single clear ownership boundary.
+- **Leaf and feature module repositories** implement a single cohesive domain or technical capability (such as `Coordinates`, `Permissions`, or an auth feature library) with explicit ownership and decision responsibilities.
 - **Application and composition host repositories** (such as `go.attestra.aws`, mobile application shells, or transitional repositories undergoing extraction) select features, bind shared infrastructure, enforce system-wide budgets, and coordinate deployment.
 
-Composition hosts—and legacy repositories not yet split—may legitimately contain components owned by multiple teams with path-scoped ownership rules, whereas leaf module repositories should preserve single-team cohesion.
+Composition hosts—and legacy repositories not yet split—may legitimately contain components owned by multiple teams with path-scoped ownership rules, while every module needs clear accountability. Multiple teams may own parts of a cohesive module when their responsibilities and approval rules are explicit; team count alone does not determine a repository boundary.
 
 ### Incubate unsettled boundaries before extracting repositories
 
 Splitting a greenfield feature across multiple repositories before its domain concepts and contracts stabilize creates high multi-repo coordination churn.
 
-When boundaries are still fluid during day-0 discovery, incubate candidate modules as build-isolated subprojects (enforcing strict package visibility and compiler module boundaries) inside the host or parent repository. Extract a subproject into an independent repository once its contract stabilizes, multiple consumers emerge, access isolation is required, or difficult logic benefits from standalone verification.
+As an optional project policy, when boundaries are still fluid during day-0 discovery, incubate candidate modules as build-isolated subprojects (enforcing strict package visibility and compiler module boundaries) inside the host or parent repository. Extract a subproject into an independent repository once its contract stabilizes, multiple consumers emerge, access isolation is required, or difficult logic benefits from standalone verification.
 
 ### Describe responsibilities, contracts, and resource budgets explicitly
 
@@ -79,7 +79,7 @@ A contract must describe behavioral and operational commitments as well as data 
 
 An AI implementer frequently encodes the same flawed assumption into both production code and its accompanying unit tests.
 
-To counter correlated mistakes, pair deterministic static/contract gates with **context-isolated verification**: run a separate verifier agent session supplied only with the approved Module Specification, Change Agreement, and public interfaces—never the implementer's reasoning trace or internal code structure—to author adversarial, boundary, and property-based checks. Approved acceptance tests must be protected against silent modification by the implementing agent.
+To counter correlated mistakes, derive behavioral tests in a fresh context from the approved specification and contract. Separately review implementation internals, data flows, permissions, and delivery configuration; black-box tests cannot replace that audit. Record limitations of each verification role. Approved acceptance tests and the policies enforcing them must be protected against silent modification by the implementing agent. See [Specifications and approvals](specifications-and-approvals.md#context-isolated-verification).
 
 ### Scope access and defend agent boundaries
 
@@ -99,7 +99,7 @@ Separate repositories do not automatically isolate runtime privileges, require n
 
 Maintain enough system context to understand dependencies, trust boundaries, sub-repository ownership in composition hosts, data flows, and compatible versions without requiring every task to inspect every implementation.
 
-Start with declarative, version-controlled metadata in each repository before introducing stateful coordination services; see [Project Memory Graph](project-memory-graph.md).
+A lightweight reference option is declarative, version-controlled metadata aggregated across repositories; see [Project Memory Graph](project-memory-graph.md).
 
 ### Use evidence to reconsider boundaries
 

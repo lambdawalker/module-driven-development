@@ -22,7 +22,7 @@ To avoid conflating enduring module boundaries with per-task plans or point-in-t
 | --- | --- | --- |
 | **Module Specification** | Durable, living file versioned in the repository (for example, `MODULE.md` or structured manifest) | Defines enduring responsibility, explicitly excluded scope, public contracts, durable invariants, forbidden capabilities and access ceiling, resource budgets, and audit risk tier. |
 | **Change Agreement** | Per-task or per-PR record produced during **module planning** | Defines the bounded scope delta, motivating obligation, new or updated acceptance cases, consumer impact analysis, and change-specific recovery and containment plan. |
-| **Release Attestation** | Immutable record per published artifact or production promotion | Binds exact commit SHA, artifact SHA-256 digest, resolved dependency lockfile state, context-isolated verification results, deterministic policy status, and (for deployable releases) signed human QA authorization. |
+| **Release Attestation** | Immutable record per published artifact or production promotion | Binds exact commit SHA, artifact SHA-256 digest, resolved dependency lockfile state, context-isolated verification results, deterministic policy status, and (for deployable releases) human QA authorization (cryptographic signing remains a design follow-up). |
 
 When creating a brand-new module, initial module planning establishes both the initial **Module Specification** and first **Change Agreement** under a single human approval. For existing modules, routine features or fixes require only a **Change Agreement** that stays within the durable **Module Specification**; any task that alters the durable specification's boundaries, public contracts, or access ceiling explicitly flags that specification diff for human approval.
 
@@ -37,7 +37,7 @@ Precise file schemas and filenames remain open.
 | Durable invariants | Properties that must always hold, with measurable tolerances where relevant |
 | Capability and access ceiling | Permitted data access, permissions, credentials, storage, network egress, and dependency constraints |
 | Resource budgets | Concurrency/thread-pool model, memory and binary-size ceilings, latency targets, and retry/backoff bounds |
-| Audit risk tier | Assigned tier (Tier 1 critical trust, Tier 2 stateful/networked feature, or Tier 3 pure-compute leaf; see [Audit scope](audit-scope.md)) |
+| Audit risk tier | Assigned tier (a project-assigned risk class based on capabilities and consequences; see [Audit scope](audit-scope.md)) |
 
 ### Illustrative coordinates specification
 
@@ -46,7 +46,7 @@ This is a proposed example, **not a verified specification of the existing coord
 - Purpose: transform coordinates between image and overlay spaces; camera capture and UI rendering are outside the responsibility.
 - Public contract: define coordinate origins, units, rotation, scaling, cropping, and mirroring precisely; zero exported transitive dependencies.
 - Durable invariant: a forward transformation followed by its inverse recovers the original point within a stated floating-point tolerance whenever invertible.
-- Capability ceiling: pure caller-supplied in-memory values; zero network egress, persistent storage, or device permissions (`Tier 3` pure-compute leaf).
+- Capability ceiling: pure caller-supplied in-memory values; zero network egress, persistent storage, or device permissions (tier depends on consumer consequences).
 - Resource budget: zero background threads, zero heap retention across calls, minimal JAR footprint.
 - Example planning question for a Change Agreement: whether points outside the image bounds clamp, error, or pass through.
 
@@ -70,37 +70,50 @@ Verification can combine deterministic static checks, automated test suites, con
 
 ### Context-isolated verification
 
-Because an implementing AI agent tends to write both implementation and unit tests around the same blind spots, non-trivial modules should separate **implementation** from **independent verification**:
+Verification has complementary responsibilities:
 
-1. Acceptance criteria and locked contract tests agreed during planning are protected by CI path/hash checks so the implementing agent cannot weaken, delete, or rewrite them to pass.
-2. An independent verifier step (or separate clean-context AI session) receives **only** the durable Module Specification, the approved Change Agreement, and the public contract/interface—never the implementer's chain-of-thought, commit commentary, or private implementation internals—and authors adversarial edge cases, negative boundary checks, and invariant/property tests.
-3. Implementer-authored unit tests remain welcome as supplementary coverage alongside the locked and verifier-authored suites.
+1. **Independent behavioral test design:** a fresh verifier session starts from the approved Module Specification, Change Agreement, and public interfaces, without the implementer's explanations. It derives adversarial, boundary, and property tests before inspecting implementation details.
+2. **Implementation and security review:** a reviewer examines source, dependencies, data flows, build scripts, permissions, and deployment configuration. This review needs access to implementation internals to detect hidden logging, unauthorized access, or unsafe failure paths.
+3. **Integrated human QA:** a named human exercises the release candidate in its intended context before production promotion.
+
+Context separation reduces one source of correlated mistakes; a second AI session does not prove independence or completeness. Record each review's inputs, scope, findings, and limitations. Implementer-authored tests remain useful supplementary evidence.
+
+Approved acceptance tests and their expected results are protected against silent weakening. CI compares them with an approved baseline outside the candidate's write authority. New tests are welcome; changing approved expectations requires an explicit agreement revision and approval.
 
 ### Deterministic merge gates versus human review
 
 Implementation authorization and merge/acceptance authority are distinct. **An implementing AI must never self-authorize automatic merging by classifying its own diff as routine.**
 
-While AI may include a contextual risk summary in the pull request description to assist reviewers, eligibility for automatic acceptance is enforced strictly by **deterministic CI policy gates** configured under a human-approved repository policy. Any of the following diff conditions automatically sets the human-review block and disables automatic merging:
+Human-approved policy defines pre-authorized categories, required evidence, escalation conditions, and any narrow exceptions. Deterministic CI checks enforce that policy; they do not establish that all meaningful behavioral changes have been detected.
 
-- Edits to the durable `Module Specification`, Change Agreement criteria, or locked acceptance test files.
-- Public API/ABI surface changes (detected via API dump tools such as `binary-compatibility-validator`, OpenAPI/Protobuf schema diffs, or exported symbol checks).
-- Modifications to dependency lockfiles, version catalogs, build scripts, repository setup configs, or CI workflow definitions.
-- Changes touching platform manifests or entitlements (such as `AndroidManifest.xml`), IAM/Pulumi infrastructure policies, secret bindings, or network egress rules.
-- Any touch within a `Tier 1` critical-trust module unless explicitly scoped by a narrower, human-signed rule.
-- Presence of an explicit human-review label/flag set by a human, verifier agent, or policy check.
+Default escalation conditions include:
 
-Only when a change falls strictly within a pre-authorized category, triggers zero deterministic escalation gates, and passes all required build, contract, and context-isolated verification checks may CI merge automatically into the target branch.
+- Changes to the Module Specification, approved agreement criteria, or locked acceptance tests.
+- Public API/ABI or wire-schema changes.
+- Dependency lockfile, version catalog, build script, setup configuration, or workflow changes.
+- Manifest, entitlement, IAM, secret-binding, or network-egress changes.
+- Changes to critical-trust modules.
+- An explicit human-review flag or unresolved concern raised by a human, verifier, or policy check.
+
+Policy precedence is explicit: an active human-review flag, failed/missing required evidence, or unresolved scope or semantic uncertainty blocks automatic acceptance. A previously human-approved exception may narrow a particular default escalation rule—for example, specified patch dependency updates—but cannot override those blocks. Otherwise, any triggered default rule requires human review. Changes outside an explicitly pre-authorized category also require review.
+
+Behavioral contract changes can preserve API signatures and file paths. Review must consider consequences, including coordinate conventions, data destinations, and authorization semantics. Unexpected behavior or uncertainty discovered during implementation or verification returns to the human even when static gates pass.
+
+Gate definitions, verifier configuration, approved test baselines, and approval identities must come from protected, approved revisions. Candidate changes to those controls cannot validate themselves; approval of a control update does not automatically authorize its use for accepting that same candidate. Record the policy revision, exceptions applied, evidence, and exact candidate accepted.
+
+Only a change within approved scope and a pre-authorized category, with no unresolved escalation and all required evidence passing, may merge automatically. Policy must state whether an existing human approval covers a detected change or whether another decision is required; the presence of an approved specification diff alone should not create an endless approval loop.
 
 ### Library artifact publication versus Human QA before production release
 
 **Decision established in discussion:** a named human tests the integrated release candidate and records that it was QA'd and is ready for production. Automatic acceptance and merging do not substitute for this production release decision.
 
-To prevent multi-repository deadlocks while preserving production safety, the methodology distinguishes two deliverable classes:
+To prevent multi-repository deadlocks while preserving production safety, the methodology distinguishes three publication and promotion stages:
 
-- **Library module publication (for example, `Coordinates` or `Card Detector`):** once code merges under the applicable review and deterministic verification gates, automation may publish immutable commit-SHA staging builds—or policy-governed library versions—so waiting downstream consumer repositories can integrate and run their own obligation checks (see [Repository automation](repository-automation.md)). Changes altering library security boundaries or public contracts still require human review prior to public release.
+- **Library candidates:** approved candidate-publication policy may allow an unmerged PR or integration branch to publish an immutable artifact into a restricted staging registry after candidate checks pass. This authorizes testing only, not merge, public release, or production use. Candidate workflows receive only staging privileges.
+- **Public library versions:** publication follows merge/release policy, required review, and final artifact verification. Consumer evidence must cover the final published artifact and resolved dependencies, or documented equivalence to the tested candidate; a source SHA alone does not prove equivalence. See [Repository automation](repository-automation.md).
 - **Deployable application and live backend production release (for example, mobile store builds or `go.attestra.aws` deployments):** promoting an integrated release candidate to production always requires named **Human QA sign-off**.
 
-QA is a responsibility rather than a headcount requirement: a solo developer can serve as the named human tester. Record the exact tested build/digest, scenarios exercised, known limitations, and release decision in the Release Attestation. If the candidate changes afterward, affected checks and QA sign-off must be re-evaluated.
+QA is a responsibility rather than a headcount requirement: a solo developer can serve as the named human tester. Record the exact tested build/digest, scenarios exercised, known limitations, and release decision in the Release Attestation. Bind the decision to the integrated source/artifact identities, actual resolved dependencies, model/assets, configuration, migrations, and target environment. If any relevant part changes afterward, re-evaluate affected checks and QA sign-off; preserve unrelated evidence only with an explicit applicability rationale.
 
 A later design discussion will bind internal production authorization to the Release Attestation digest using a phone or hardware security key; see [Signed production authorization](topics-needing-detail.md#signed-production-authorization).
 
@@ -131,17 +144,18 @@ Judge significance by consequences rather than line count:
 
 **Draft pending practical validation.**
 
-### Approval surface tiers (mobile versus workstation)
+### Review capability and remote approval
 
-Being away from the workstation should not stall routine agent progress, yet tiny screens invite rubber-stamping on complex diffs. Split remote decisions by review ergonomics:
+Approval depends on sufficient evidence, authenticated authority, and the ability to inspect the relevant behavior—not the device used.
 
-- **Mobile-suitable approvals:** approving a concise, well-bounded Change Agreement within existing module boundaries; answering an explicit open product decision; authorizing a pre-planned containment/rollout pause; or rejecting an off-track proposal.
-- **Workstation-required approvals:** changes modifying a durable Module Specification's security ceiling, IAM/permission policies, cryptographic or authentication logic, shared CI/publishing machinery, large multi-file behavioral diffs, and hands-on Human QA production sign-offs.
+A concise Change Agreement or containment decision may be easy to review on a phone. Security-sensitive changes and large diffs need deeper inspection, which may be more convenient on a workstation or remote review environment. Defer approval when the available surface cannot support that inspection; do not make workstation ownership a methodology requirement.
+
+Human QA can occur on the actual target device, including an Android phone. Recording or signing the production decision remotely is valid when the required QA and review evidence are available and bound to the exact release candidate. Signing proves authorization, not testing quality.
 
 ### Proposed behavior
 
 1. AI or a deterministic policy gate detects that the next action exceeds existing authorization.
-2. AI prepares a concise, reviewable proposal identifying the blocked stage and required review tier (mobile-suitable vs. workstation).
+2. AI prepares a concise, reviewable proposal identifying the blocked stage and required evidence and inspection capabilities.
 3. The configured channel notifies the authorized human and links to the exact commit/revision.
 4. The human approves, rejects, or requests revision.
 5. The runner cryptographically or API-verifies the decision, the human identity, and the exact proposal SHA covered.
@@ -151,7 +165,7 @@ While blocked, AI may continue orthogonal work that stays strictly within prior 
 
 ### Proposed request contents
 
-- Module, repository, exact commit SHA, and approval tier (mobile vs. workstation).
+- Module, repository, exact commit SHA, and required review scope.
 - Blocked action and the specific authorization scope requested (implement Change Agreement, merge escalated PR, or execute recovery).
 - Summary of scope delta, deterministic gates triggered, security/compatibility impact, and recovery owner.
 - Verification evidence summary, open uncertainties, and clear approve / reject / revise actions.
@@ -160,7 +174,7 @@ While blocked, AI may continue orthogonal work that stays strictly within prior 
 
 A candidate setup uses a dedicated, least-privilege GitHub App or bot account to open pull requests and request review from the human maintainer's account (since GitHub forbids self-approval of one's own pull request).
 
-**Mandatory repository prerequisite:** before enabling autonomous agent branches or auto-merge workflows, target branches (`main` and release branches—including in the methodology repository itself) must enable enforced branch rulesets requiring pull requests, passing status checks, non-author human approval when escalated, stale-review dismissal on new pushes, and zero bypass permissions for the automation identity.
+**Candidate GitHub safeguards:** before enabling autonomous merging or release, verify enforced target-branch rulesets, required status checks, authenticated human approval for escalated changes, stale-approval invalidation, and no automation bypass. A protected policy check must enforce conditional human review; do not assume one static required-review count represents both automatic and human-reviewed acceptance paths. Creating a development branch alone does not require production release controls.
 
 References consulted during discussion:
 
@@ -175,7 +189,7 @@ Before relying on remote approval, run and log a trial with one human approver a
 | Scenario | What to check |
 | --- | --- |
 | Request delivery | Notification reaches the phone and opens the exact proposal revision |
-| Ergonomic clarity | Mobile-tier requests are understandable on a phone; workstation-tier requests clearly defer to desktop review |
+| Ergonomic clarity | Requests expose sufficient evidence on the available device or clearly explain what further inspection is needed |
 | Approval binding | Runner verifies the authorized human identity and exact commit SHA before resuming |
 | Rejection | Blocked action stays halted and records rejection cleanly |
 | Revision invalidation | Pushing a modified commit automatically dismisses or invalidates an earlier approval |
