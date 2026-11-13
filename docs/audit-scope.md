@@ -1,54 +1,73 @@
 # Audit scope
 
-**Agreed requirement:** auditing covers every aspect of a module, including data access and permissions.
+**Agreed requirement:** auditing covers every aspect of a module, including data access, permissions, AI-specific threat surfaces, and cross-module interactions, scaled proportionally to module risk.
 
-The coverage below is an initial proposal for making that requirement concrete. The audit procedure, reviewer roles, release gates, and required evidence formats remain open.
+The coverage below makes that requirement actionable; the tier model is a proposed project-policy template for proportionate review. Exact evidence schemas and automated policy thresholds remain open.
 
 ## Coverage
 
 | Area | Questions the audit should answer | Example evidence |
 | --- | --- | --- |
-| Purpose and requirements | Does behavior match the stated responsibility? What behavior is prohibited? | Scope, requirements, acceptance criteria |
-| Architecture and boundaries | What does the module own? Where are its trust boundaries and assumptions? | Dependency map, data flows, boundary description |
-| Implementation | Are normal, failure, concurrency, and resource-exhaustion paths handled correctly? | Code review, tests, analysis findings |
-| Contracts | Are inputs, outputs, failures, side effects, and compatibility expectations explicit? | API or package contracts, contract tests |
-| Authentication and authorization | How are identities established and actions authorized? Who enforces each check? | Authentication flows, authorization rules, negative tests |
-| Data access and lifecycle | What data is read, created, changed, stored, logged, transmitted, retained, and deleted? | Data inventory, access rules, retention behavior |
-| Permissions and isolation | What can development tools, build jobs, and runtime components access? Are boundaries enforced? | Repository permissions, IAM policies, sandbox and network configuration |
-| Secrets and cryptography | How are secrets and keys issued, stored, used, rotated, and revoked? | Secret-handling design, redacted configuration, rotation evidence |
-| Dependencies and supply chain | What direct and transitive dependencies are used, where do they come from, and what risks or licensing constraints apply? | Dependency inventory, lockfiles, provenance, vulnerability and license findings |
-| Build and release | Can artifacts be traced to reviewed source? Who or what can modify and publish them? | Pipeline configuration, build records, artifact integrity and provenance |
-| Deployment and configuration | Do deployed settings preserve the assumptions reviewed in source? | Infrastructure definitions, environment configuration, deployment records |
-| Runtime behavior | What happens during abuse, failures, retries, recovery, and operational changes? | Runtime tests, limits, monitoring and recovery evidence |
-| Observability and privacy | Are failures observable without exposing secrets or sensitive data? | Logging review, redaction tests, alerts, access and retention rules |
-| Module interactions | Do consumers and providers agree about identity, ownership, validation, and failure handling? | Integration tests, system threat analysis, compatible version records |
-| Maintenance | How are findings, dependency changes, incidents, and obsolete versions handled? | Finding records, remediation history, update and support policies |
+| Purpose and requirements | Does behavior match the stated Module Specification? What capabilities are explicitly prohibited? | Module Specification, Change Agreements, negative tests |
+| Architecture and boundaries | What does the module own? Where are its trust boundaries and upstream/downstream assumptions? | Dependency map, data-flow diagram, boundary specification |
+| AI agent security and prompt injection | Can untrusted issues, PR text, dependency files, build logs, or MCP/graph records manipulate agents? Are agent tools, filesystem scope, network egress, and credentials isolated? | Agent sandbox/egress rules, untrusted-input separation, package registry allowlists, credential-exclusion checks |
+| Implementation | Are normal, edge, concurrency, and failure paths handled without correlated test blind spots? | Code review, context-isolated adversarial/property tests, static analysis |
+| Contracts | Are inputs, outputs, units, error semantics, side effects, and caller obligations explicit and enforced? | Public API/ABI dumps, schema definitions, locked contract tests |
+| Cross-boundary version skew | Do backend endpoints, exported configs, and wire schemas preserve N-back compatibility with older installed clients that cannot be reverted? | Wire-compatibility checks, expand-and-contract migration plan, client deprecation policy |
+| Authentication and authorization | How are identities established and actions authorized? Which module enforces each check? | Auth flows, authorization rules, cross-module negative tests |
+| Data access and lifecycle | What data is read, created, mutated, logged, transmitted, retained, and deleted? Did data sensitivity change? | Data inventory, access rules, retention/deletion verification |
+| Permissions and isolation | What can development agents, CI jobs, and runtime components access? Are repository rulesets and sandboxes enforced? | Branch protection rulesets, IAM policies, container/runner network configs |
+| Secrets and cryptography | How are keys and secrets issued, stored, rotated, and revoked? Are signing keys strictly unreachable by AI agents? | Secret architecture, KMS/OIDC release isolation, rotation records |
+| Dependencies and supply chain | Are dependencies encapsulated (`implementation` vs. `api`), aligned with ecosystem BOMs, pinned, and free of hallucinated or vulnerable packages? | Lockfiles, SBOM/provenance, transitive exposure check, vulnerability/license scans |
+| Build and release | Can published artifacts be traced cryptographically to reviewed source and Release Attestations? | Reproducible build config, SLSA/in-toto provenance, release guard logs |
+| Deployment and configuration | Do live settings match source assumptions and preserve safe rollback/containment controls? | IaC diffs, exported client config checks, feature-flag/kill-switch verification |
+| Resource budgets and resilience | Does the module stay within memory, binary-size, thread-pool, latency, and retry/backoff budgets without causing retry storms? | Benchmark/size gates, executor ownership review, backoff/circuit-breaker tests |
+| Runtime behavior, observability, and privacy | Are failures and drift detectable without leaking secrets or PII in logs or analytics? | Redaction tests, structured alert signals, recovery drill evidence |
+| Module interactions | Do composed modules agree on identity, validation, ownership, version ranges, and failure semantics? | Consumer-led obligation tests, system threat model, verified version matrix |
+| Maintenance | How are advisories, ownership transfers, stale assumptions, and deprecated versions handled? | Remediation records, active owner confirmation, support sunset policy |
 
-Evidence should explain why any area is not applicable. An empty checkbox is not evidence.
+Evidence must explain why any domain is inapplicable (for example, zero network or storage capability in a pure math library). An empty checkbox is not evidence.
+
+## Risk tiers and delta-scoped audits
+
+Applying identical manual audit ceremony to a stateless geometry helper and an authentication backend causes reviewer fatigue and weakens scrutiny where it matters most. Projects may adopt the following tiers or an equivalent risk model. Classification considers capabilities, data sensitivity, failure consequences, affected consumers, and blast radius. Record the rationale in the Module Specification; implementation type alone never assigns a tier. A pure mathematical component used for identity decisions, payments, or safety may need critical-trust scrutiny.
+
+| Tier | Profile and examples | Baseline and ongoing audit expectations |
+| --- | --- | --- |
+| **Tier 1 — Critical trust & shared tooling** | Auth, cryptography, key attestation, permissions, IAM/Pulumi composition, payment/contract signing, and shared CI/release plugins (`gradle.android-repo-setup`) | Full human-led baseline audit across all domains, human review with sufficient inspection capability for boundary/code changes, context-isolated adversarial testing, and mandatory delta audit on any security, dependency, or contract touch. |
+| **Tier 2 — Stateful, networked, or UI feature modules** | Feature backends, storage/S3 adapters, camera/ML integration libraries (`Card Detector`) | Targeted baseline audit focused on contracts, permissions, data lifecycle, version skew, and resource budgets; automated CI gates for routine internal changes; delta human review when deterministic escalation gates fire. |
+| **Tier 3 — Limited-consequence modules** | For example, a stateless, zero-I/O helper whose failure has bounded consequences; Coordinates requires assessment of its actual consumers | Proportionate source and boundary review, evidence for declared capability limits, independent invariant tests, and appropriate compatibility/dependency checks. |
+
+### Baseline audits versus delta re-audits
+
+A **baseline audit** establishes initial trust for a module revision and its declared tier. Subsequent changes within unchanged boundaries rely on automated deterministic gates and context-isolated verification unless a **re-audit trigger** occurs:
+
+- Changing module capabilities, permissions, network egress, consumer consequences, or risk classification (including a proposed downgrade).
+- Modifying `Tier 1` security logic, cryptographic primitives, or shared release automation.
+- Introducing new external dependencies or receiving a relevant supply-chain/vulnerability advisory.
+- Changing data sensitivity (for example, storing identity documents in a bucket previously audited for public thumbnails).
+- Breaking wire or binary compatibility across module boundaries.
 
 ## Audit conclusions and limits
 
-A proposed audit record should identify:
+A proposed audit record (linked from the module's **Release Attestation**) should identify:
 
-- The source revision and artifact examined.
-- Dependency versions and the relevant deployment and configuration.
-- Scope, methods, reviewer, and supporting evidence.
-- Findings, unresolved questions, and limitations.
-- Assumptions about other modules and the environment.
-- Changes that require the conclusion to be revisited.
+- Examined source commit SHA, artifact digest, risk tier, and audit type (baseline vs. delta).
+- Resolved dependency lock state, build tooling version, and target deployment assumptions.
+- Scope, methods, human/verifier identities, and supporting evidence links.
+- Findings, accepted residual risks, and explicit assumptions about upstream or downstream modules.
+- Specific conditions or triggers that invalidate the conclusion.
 
-An audit conclusion applies to its stated scope and conditions. It does not establish that all future versions or all deployments are safe.
+An audit conclusion applies strictly to its stated revision, configuration, and environmental assumptions.
 
 ## Verification across boundaries
 
-For example, a login module may correctly issue an identity token while an upload module fails to enforce ownership of the destination. Reviewing token issuance alone would miss the system vulnerability.
+A login module may validly issue an identity token while an upload module fails to verify destination ownership, or three modules with individually polite retry loops may multiply into a 27x retry storm when chained.
 
-Auditing therefore needs both module-level evidence and evidence that the assembled system enforces its security requirements.
+System auditing at the **Application Composition Host** level must therefore verify cross-module authorization enforcement, N-back client-backend skew, and aggregate resource/retry behavior across the assembled graph.
 
 ## Decisions still open
 
-- Which evidence is mandatory for every module, and how does review depth vary with risk?
-- How are reviewers selected and kept sufficiently independent of the implementer?
-- What findings block a release, and who can accept unresolved risks?
-- Which code, dependency, contract, permission, configuration, or deployment changes require renewed review?
-- How are audit conclusions and affected consumers updated when assumptions change?
+- Exact machine-readable schema for linking audit records into Release Attestations.
+- Rules for qualifying independent human or specialized AI security auditors on `Tier 1` modules.
+- SLA and quarantine policies when a post-release advisory invalidates an active module attestation.

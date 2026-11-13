@@ -1,88 +1,81 @@
 # Topics needing more detail
 
-**Status: open discussion follow-ups, 2026-11-11.** This list keeps unfinished topics visible for future planning conversations. Items remain open until discussed and their outcomes recorded; an outline or example is not completion.
+**Status: open discussion follow-ups, 2026-11-11.** This list keeps unfinished design conversations visible. Section headings use stable names so cross-document links do not break as statuses evolve; items close only when outcomes are recorded in their target documents.
 
-## Artifact-specific recovery guidance — return to this conversation
+## Artifact-specific recovery guidance
 
-**Requested follow-up. Not yet complete.**
+**Status: requested follow-up — return to this conversation. Not yet complete.**
 
-Revisit the recovery-planning discussion and systematically work through common artifact types and guidelines for handling their failure and recovery.
+Revisit the recovery-planning discussion and systematically work through common artifact types, pre-authorized break-glass containment bounds, and full recovery procedures.
 
-The [recovery planning guidelines](recovery-planning-guidelines.md) contain an initial artifact table and a useful database example, including the risk of losing newer valid writes when restoring a backup. These are a starting point, not a complete artifact catalog or a set of validated recovery procedures.
+The [recovery planning guidelines](recovery-planning-guidelines.md) establish the split between pre-authorized reversible containment and human-authorized state recovery, alongside initial database, installed-client skew, and accessibility examples. Deeper worked patterns remain to be drafted:
 
-- [ ] Agree on a practical list of common artifact types.
-- [ ] Deepen the database example: schema versus records, compatibility, preserving newer valid work, and verification.
-- [ ] Develop comparable examples for code/builds, dependency versions, assets/content (including accessibility), configuration, infrastructure, permissions, and external effects.
-- [ ] For each type, discuss failure signals, feasible rollback or repair, irreversible effects, coordinated recovery with other artifacts, and evidence that recovery worked.
-- [ ] Discuss human ownership, readiness, notifications, authorization, and escalation in those examples.
-- [ ] Use the examples to improve the questions AI raises before implementation and during course-correction planning.
+- [ ] Agree on a practical catalog of artifact types used across mobile, Go backend, ML model, and infrastructure repos.
+- [ ] Deepen the database playbook: expand-and-contract phases, isolating post-deploy valid writes, idempotent reconciliation, and verification.
+- [ ] Develop worked playbooks for installed mobile clients, transitive library regressions, code-free ML model bundles, CDN/cached UI assets, IaC stateful resources, IAM policies, and irreversible external side effects.
+- [ ] For each playbook, specify failure signals, safe break-glass containment vs. human-authorized repair, coordinated multi-artifact order of operations, and post-recovery verification checks.
+- [ ] Define human readiness, change-window coverage, unreachable-owner escalation timeouts, and post-containment review records.
+- [ ] Distill the resulting playbooks into sharper planning prompts for Change Agreements.
 
-**Intended result:** adaptable, artifact-specific conversation guidance with worked examples and explicit limitations. Keep these as guidelines, not universal rules; each project's module agreement determines its actual recovery plan.
+**Intended result:** adaptable, artifact-specific conversation playbooks with explicit limitations—keeping project-specific authority inside each approved Change Agreement.
 
-## Artifact signals and scheduled checks — return to this conversation
+## Artifact signals and scheduled checks
 
-**Requested follow-up. Not yet complete.**
+**Status: requested follow-up — return to this conversation. Not yet complete.**
 
-Start with artifacts actually used in the current project, such as databases, S3 buckets, and their configuration. Extend the artifact catalog above with the conditions each consuming team relies on and the signals that reveal whether those conditions still hold.
+Extend the artifact catalog with concrete invariants relied upon by consuming teams (such as S3 bucket public-access blocks, KMS rotation state, or API latency/error ceilings) and connect operational drift detection to project ownership.
 
-The discussion identified two complementary signal sources:
+Two signal phases complement each other:
 
-- **During planning:** a proposed artifact-state change is checked against the graph, revealing dependent teams that need to join the conversation.
-- **After release / during operation:** a separate scheduled process checks the actual state of an important artifact, helping detect mistakes or drift even when planning did not prevent them.
+- **Planning-time signals:** checking a proposed Change Agreement against repository dependency manifests / [Project Memory Graph](project-memory-graph.md) to bring dependent teams into review before code ships.
+- **Operational state signals:** scheduled or event-driven checks verifying that live artifacts still satisfy required invariants, catching out-of-band console edits or configuration drift.
 
-A consuming team could request periodic checks of a condition such as private versus public access. Intervals of **10 or 30 minutes were examples**, not chosen schedules or universal defaults. This capability could belong to the software that includes Project Memory Graph; implementation and ownership remain to be designed.
+To keep [Project Memory Graph](project-memory-graph.md) focused on architectural memory rather than rebuilding observability infrastructure, operational checks should run in dedicated cloud/infrastructure monitors (such as AWS Config, CloudWatch, or Prometheus) and emit structured drift/alert events into the graph for impact routing. Check intervals (10 or 30 minutes were illustrative examples) depend on blast radius, detection-delay tolerance, and cost.
 
-- [ ] Inventory relevant artifacts from the current project as the starting point for worked examples.
-- [ ] For each artifact, connect the required condition to its signal, verification method, dependent teams, and responsible human.
-- [ ] Explore scheduled artifact-state checks (“heartbeat” checks) alongside planning signals and change events.
-- [ ] Choose check intervals according to consequences, acceptable detection delay, and operational cost.
-- [ ] Define how observations and evidence link into the graph and trigger notifications or review for affected teams.
-- [ ] Distinguish a failed condition from an inconclusive check, insufficient permissions, or a missed/stale monitoring run.
-- [ ] Discuss monitor ownership, access, alert handling, and how to know that the monitoring process itself is working.
-- [ ] Link confirmed problems to the agreed human-authorized recovery process.
-- [ ] Evaluate which parts belong in the graph companion system and which integrate external monitoring.
-
-**Intended result:** adaptable guidance for planning and operational signals by artifact type, with concrete project examples. No monitoring job, notification integration, or schedule has been configured by recording this follow-up.
+- [ ] Inventory concrete stateful artifacts from current projects (`go.attestra.aws` buckets, databases, IAM roles, exported Android configs) as worked examples.
+- [ ] Map each artifact invariant to its native monitor check, dependent modules/teams, break-glass containment option, and human recovery owner.
+- [ ] Design the event payload linking external monitor failures into Project Memory Graph obligations and notifications.
+- [ ] Distinguish confirmed invariant violations from inconclusive runs, monitor permission errors, or dead-man-switch/stale monitor silence.
+- [ ] Define monitor least-privilege read access and self-health verification.
 
 ### Additional signal sources to explore
 
-Return to the question: **“What could change around this artifact that would make our earlier acceptance no longer sufficient?”** These are candidate signals to investigate, not a finalized trigger policy.
+Return to the question: **“What could change around an unchanged artifact that invalidates earlier acceptance?”**
 
-- [ ] **Changed use or data sensitivity:** for example, a private bucket starts holding identity documents instead of public product photos without a technical configuration change. Explore how teams declare new uses and when manual review is needed.
-- [ ] **Changed ownership:** a team reorganizes, a responsible person leaves, or responsibility transfers. Verify that someone accepts the existing obligations, access, and response duties.
-- [ ] **User reports and incidents:** accessibility complaints, unexpected access denials, corrupted output, and other reports may expose gaps in automated checks. Discuss triage and evidence.
-- [ ] **Surrounding-system changes:** dependency vulnerability advisories, external API behavior, and configuration changes may invalidate assumptions about an unchanged artifact.
-- [ ] **Changes to verification:** disabled checks, altered expected results, checks that stop running, and missing evidence should prompt investigation. Lost visibility is not evidence of a healthy artifact.
-- [ ] **Behavioral analytics:** explore unexpected increases or decreases in feature usage, completion rates, abandonment, retries, and time to complete as indirect signals from users. Compare with relevant traffic, historical patterns, rollout versions, and affected user groups; a usage spike may reflect retries rather than success, and a drop may reflect lower traffic rather than a broken feature. Check analytics instrumentation and delivery before attributing a change to the product. Link the signal through the graph to responsible teams for investigation, not automatic rollback. Decide appropriate baselines, observation windows, data-access/privacy constraints, and response thresholds during project planning.
-- [ ] **Graph-based routing:** connect each signal to affected conditions, consumers, and teams; define who investigates, how they are notified, and which evidence supports a decision.
+- [ ] **Changed use or data sensitivity:** for example, storing identity documents in an S3 bucket originally audited for public thumbnails without changing bucket ACLs—requiring a Module Specification / Change Agreement review trigger.
+- [ ] **Changed ownership:** team reorganization or maintainer departure requiring explicit re-acceptance of recovery and review duties.
+- [ ] **User reports and incidents:** accessibility barriers, device-specific camera/overlay bugs, or unexpected denials exposing test gaps.
+- [ ] **Surrounding-system advisories:** transitive CVEs, OS permission changes (Android/iOS SDK target updates), or upstream API deprecations invalidating a prior Release Attestation.
+- [ ] **Verification degradation:** skipped suites, flaky-test quarantine abuse, or silent monitor failures; lost visibility must surface as degraded assurance rather than green status.
+- [ ] **Behavioral analytics:** anomalous spikes or drops in completion rates, retries, abandonment, or duration—validated against instrumentation health, traffic mix, and rollout cohort before attributing to product regressions, routing to teams for investigation rather than automatic rollback.
 
-## Signed production authorization — return to this conversation
+## Signed production authorization
 
-**Requested follow-up. Concept only; mechanism not selected or implemented.**
+**Status: requested follow-up — return to this conversation. Concept only; mechanism not selected or implemented.**
 
-Explore an internal production-promotion authorization signed by a named human using a mobile phone or a hardware security key (for example, a USB security key). The intent is a verifiable internal record that identifies who authorized promotion through which registered credential and binds that authorization to the artifact being promoted.
+Design a cryptographically verifiable human sign-off for promoting an integrated release candidate to production, bound directly to the candidate's **Release Attestation** (see [Specifications and approvals](specifications-and-approvals.md#library-artifact-publication-versus-human-qa-before-production-release)).
 
-This serves the human QA release decision; it is distinct from Google Play or Apple distribution signing and does not replace those platform requirements.
+This internal governance signature proves *which named human authorized production promotion after QA* and *which exact artifact digest was authorized*; it complements rather than replaces Google Play App Signing or Apple distribution certificates.
 
-- [ ] Explore phone-based and hardware-key approaches and their actual signing capabilities; do not assume every authentication key can sign arbitrary artifacts.
-- [ ] Define whether the signature covers the artifact directly or an authorization statement containing its digest, tested build/version, destination environment, QA decision, and authorization scope.
-- [ ] Design the internal authorization log and how promotion verifies the record against the exact candidate.
-- [ ] Discuss credential enrollment, human identity, loss/revocation, and verification of historical records.
-- [ ] Distinguish proof of authorization from the QA evidence itself; a signature does not prove that testing was sufficient.
+To avoid inventing custom cryptography or hitting hardware-token payload limits, evaluate established standards first:
 
-Keep this as a note for a later design conversation rather than a chosen cryptographic architecture.
+- [ ] **Candidate attestation format:** evaluate an in-toto statement with an appropriate human-authorization predicate, linked to build provenance where available (binding source commit SHA, immutable artifact SHA-256 digest, resolved BOM/dependency digest, target environment, QA summary hash, timestamp, and authorization scope) rather than raw multi-megabyte binaries.
+- [ ] **Hardware security key path:** evaluate **OpenSSH FIDO2 resident keys** with tested user-presence/user-verification policy and compatible signing tooling and **Sigstore / Cosign** hardware-token signing.
+- [ ] **Mobile phone path:** evaluate **WebAuthn / Passkey assertions** signing a challenge derived from the canonical Release Attestation SHA-256 digest, verifying user-verification (`uv`) flags and credential binding.
+- [ ] **Verification and transparency log:** define how deployment pipelines verify the signature against an enrolled maintainer public-key registry (protected outside AI agent write scope) and append records to an append-only audit log before releasing credentials to deploy.
+- [ ] **Key lifecycle:** specify enrollment ceremony, backup key requirements for solo developers, lost/compromised key revocation without invalidating historical pre-revocation attestations, and separation between QA evidence quality and cryptographic proof of sign-off.
 
 ## Other open topics already identified
 
-These entries summarize remaining questions in the existing draft; they do not reopen decisions already established.
+The three-record model and verification responsibilities are documented. Risk tiers, staging tooling, and Git-native manifests remain project-policy or reference proposals requiring practical validation. Concrete follow-ups remain:
 
-- [ ] **Remote approval trial:** test notification delivery, approval, rejection, revisions, no response, and runner interruption/resume; record observations before removing the provisional marker. See [specifications and approvals](specifications-and-approvals.md).
-- [ ] **Verification and audit detail:** refine evidence formats, independent verification, and what changes require another audit. Preserve the agreed automatic-acceptance and human-review paths. See [audit scope](audit-scope.md).
-- [ ] **Project-specific policy refinement:** use practical cases to refine meaningful-change classification and approved automation boundaries. Keep the common guidance lightweight.
-- [ ] **Integration and release automation:** detail artifact identity, published-artifact verification, reliable triggers, waiting consumer branches, and reruns after relevant changes. This implements the existing planning/acceptance model rather than introducing a separate approval process.
-- [ ] **Project Memory Graph design and trial:** refine provenance, freshness, ownership, version combinations, synchronization, and access controls; test whether the proposed system improves continuity and impact analysis. See [concept document](project-memory-graph.md).
-- [ ] **Maintenance and evolving boundaries:** discuss ongoing ownership, compatible versions, and signals for reconsidering module boundaries.
+- [ ] **Governance file schemas:** finalize exact YAML/Markdown schemas for `MODULE.md` (Module Specification), Change Agreements, and Release Attestations.
+- [ ] **Remote approval runner trial:** test GitHub App/bot identity setup, enforced branch rulesets, evidence and inspection-capability routing, commit-SHA approval binding, revision invalidation, and idempotent runner resume; record trial notes in [Specifications and approvals](specifications-and-approvals.md).
+- [ ] **Context-isolated verifier harness:** prototype the clean-room CI/agent invocation that feeds only `MODULE.md`, Change Agreement, and public interfaces to the adversarial verifier while enforcing protected-baseline guards on locked test files; also prototype source/security review with implementation access.
+- [ ] **Cross-repo inner-loop & BOM tooling:** extend [Repository automation](repository-automation.md) (`gradle.android-repo-setup` and Go composition tooling) with commit-SHA staging feeds, `binary-compatibility-validator` gates, BOM alignment, and ruleset drift checks.
+- [ ] **Phase 1 Git-native graph prototype:** test CI manifest aggregation, revision-vector freshness, conflicting plans, and read-only MCP query usefulness against real repositories; compare with the dedicated-service option; see [Project Memory Graph](project-memory-graph.md).
+- [ ] **Boundary graduation and lifecycle rules:** define practical metrics for graduating day-0 subprojects into standalone repos, enforcing N-back client deprecation windows, and retiring obsolete modules.
 
 ## How to close a follow-up
 
-Record the conversation outcome in the relevant document, retain any unresolved questions, and link the resulting decision or trial notes here. No date or reminder has been scheduled by this list.
+Record the agreed design or trial evidence in the canonical methodology document, preserve any residual limitations, and link the commit or decision record here.
